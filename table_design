@@ -1,0 +1,12 @@
+CREATE TABLE Knowledge_item
+(
+id VARCHAR PRIMARY KEY IDENTITY(1,1),
+name VARCHAR (50) NOT NULL,
+rarity VARCHAR (50) NOT NULL,
+level INT (50) NOT NULL,
+price INT,
+price rate of change INT NOT NULL,
+combination recipe VARCHAR / arr?,
+total amount INT NOT NULL
+total amount rate of change INT NOT NULL,
+)
