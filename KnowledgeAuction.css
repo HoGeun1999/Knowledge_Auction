@@ -1,0 +1,85 @@
+body{
+    display: flex;
+    justify-content: center;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+#wrap {
+    display: grid;
+    width: 1400px;
+    height: 900px;
+    grid-template-areas:
+        "inventory collection"
+        "getItemWrap upgradeWrap";
+    grid-template-rows: 800 600;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+}
+
+#inventory {
+    grid-area: inventory;
+    border: 1px solid black;
+    height: 470px;
+    width: 600px;
+    overflow-x: hidden;
+    justify-self: start;
+    
+}
+
+#collection {
+    grid-area: collection;
+    border: 1px solid black;
+    height: 470px;
+    width: 600px;
+    overflow-x: hidden;
+    justify-self: start;
+}
+
+#getItemWrap {
+    grid-area: getItemWrap;
+    justify-self: start;
+}
+
+#getItem{
+    border: 1px solid black;
+    height: 350px;
+    width: 600px;
+    overflow-x: hidden;;
+
+}
+
+#upgradeWrap {
+    grid-area: upgradeWrap;
+    justify-self: start;
+}
+
+#upgrade {
+    display: inline-block;
+    border: 1px solid black;
+    height: 350px;
+    width: 600px;
+
+}
+
+.tabButton {
+    width: 80px;
+    height: 30px;
+}
+  
+.quizButton{
+    justify-content: center;
+}
+
+/* .quizButton{
+    display: flex; 
+    justify-content: center;
+} */
+
+#enforceBox{
+    height: 100px;
+    width: 100px;
+    overflow-x: hidden;
+    margin-left: 30px;
+    margin-top: 50px;
+    border: 1px solid black;
+}
