@@ -23,7 +23,7 @@ body{
     width: 600px;
     overflow-x: hidden;
     justify-self: start;
-    
+    float: left;
 }
 
 #collection {
@@ -82,4 +82,32 @@ body{
     margin-left: 30px;
     margin-top: 50px;
     border: 1px solid black;
+}
+
+.item{
+    border: 1px solid black;
+    height: 100px;
+    width: 100px;
+    float: left;
+}
+
+.drawButton{
+    width: 80px;
+    height: 30px;
+}
+
+#itemInfo{
+    border: 1px solid black;
+    height: 150px;
+    width: 300px; 
+    background-color: black;
+    color: white;
+    position: fixed;
+    top: 0;
+    opacity: 0.9;
+    white-space: pre-line;
+    font-size: 14px;
+    height: auto;
+    padding: 10px;
+    z-index: 10;
 }
