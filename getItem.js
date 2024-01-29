@@ -1,7 +1,7 @@
-import { inventoryBox } from "./KnowledgeAuction.js"
-import englishWord from "./KA_englishQuizObject.js"
-import { renderItemINFO } from "./KnowledgeActionInventory.js"
-
+import englishWord from "./englishQuizObject.js"
+import { renderItemINFO,onClickItem } from "./Inventory.js"
+export let dragged
+let inventoryBox =document.getElementById('inventory')
 let getItemBox = document.getElementById('getItem')
 const nomalDrawList = [1,2,3,4,5,6]
 const specialDrawList = [7]
@@ -27,12 +27,6 @@ function renderQuizBox(){
 
 function onClickMathButton(){
     renderMathQuiz()
-    // const mathItem = document.createElement('div')
-    // mathItem.innerHTML = '수학'
-    // mathItem.className = 'item'
-    // mathItem.id = 1
-    // mathItem.addEventListener("click",onClickItem(mathItem))
-    // inventoryBox.appendChild(mathItem)
 }
 
 function renderMathQuiz(){
@@ -60,35 +54,9 @@ function onClickmathAnswerButton(mathAnswerInput,mathAnswer){
             mathItem.className = 'item'
             mathItem.id = 1
             mathItem.addEventListener("click",onClickItem(mathItem))
-            inventoryBox.appendChild(mathItem)
         }
         else
             console.log('wrong') 
-    }
-}
-
-// fetch("http://localhost:3000/item")
-// .then(function(response){
-//     return response.json() 
-// })
-// .then(function(data){
-//     const getdata = JSON.stringify(data)
-//     console.log(getdata)
-//     // console.log(JSONSON.stringify(data))
-// })
-
-function onClickItem(item){
-    return () => {
-        let url = 'http://localhost:3000/item/' + item.id
-        fetch(url)
-        .then(function(response){
-            return response.json() 
-        })
-        .then(function(data){
-            const getdata = JSON.stringify(data)
-            console.log(getdata)
-            // console.log(JSONSON.stringify(data))
-        })
     }
 }
 
@@ -139,8 +107,12 @@ function renderDrawBox(){
     specialDrawButton.innerHTML = '고급뽑기'
     nomalDrawButton.className = 'drawButton'
     specialDrawButton.className = 'drawButton'
-    nomalDrawButton.addEventListener('click',getRandomItem(nomalDrawList))
-    specialDrawButton.addEventListener('click',getRandomItem(specialDrawList))
+    nomalDrawButton.addEventListener('click',function(){
+        const randomNum = Math.floor(Math.random() * nomalDrawList.length)
+        const item = makeItem(nomalDrawList[randomNum])
+        inventoryBox.appendChild(item)
+    })
+    specialDrawButton.addEventListener('click',makeItem(specialDrawList))
     getItemBox.appendChild(nomalDrawButton)
     getItemBox.appendChild(specialDrawButton)
 }
@@ -149,31 +121,54 @@ function onClickDrawButton(){
     renderDrawBox()
 }
 
-function getRandomItem(drawList){
-    return function(){
-        const item = document.createElement('div')
-        const randomNum = drawList[Math.floor(Math.random() * drawList.length )]
-        
-        let url = 'http://localhost:3000/item/' + randomNum
-        fetch(url)
-        .then(function(response){
-            return response.json() 
+
+// function makeItem(numList,location){
+//     return function(){
+//         const randomNum = Math.floor(Math.random() * numList.length)
+//         const item = document.createElement('div')
+//         let url = 'http://localhost:3000/item/' + numList[randomNum]
+//         fetch(url)
+//         .then(function(response){
+//             return response.json() 
+//         })
+//         .then(function(data){
+//             item.className = 'item'
+//             item.innerHTML = data[0].name + '<br>' + data[0].level
+//             item.addEventListener('click',onClickItem(item))
+//             item.addEventListener('mouseenter',renderItemINFO(item,data[0]))
+//             item.addEventListener('mouseout',() => {
+//                 const itemTextDiv = document.getElementById('itemInfo')
+//                 item.removeChild(itemTextDiv)
+//             });
+//             location.appendChild(item)
+//         })
+//     }
+// }
+
+function makeItem(itemId){
+    const item = document.createElement('div')
+    let url = 'http://localhost:3000/item/' + itemId
+    fetch(url)
+    .then(function(response){
+        return response.json() 
+    })
+    .then(function(data){
+        item.className = 'item'
+        item.innerHTML = data[0].name + '<br>' + data[0].level
+        // item.addEventListener('click',onClickItem(item))
+        item.draggable = 'true'
+        item.addEventListener('dragstart',(e) =>{
+            dragged = e.target       
+            e.target.classList.add("dragging");
         })
-        .then(function(data){
-            // const getdata = JSON.stringify(data) 
-            console.log(data[0])
-            console.log(data[0].id)
-            item.id = randomNum
-            item.className = 'item'
-            item.innerHTML = data[0].name
-            item.addEventListener('mouseenter',renderItemINFO(item,data[0]))
-            item.addEventListener('mouseleave',() => {
-                const itemTextDiv = document.getElementById('itemInfo')
-                item.removeChild(itemTextDiv)
-            });
-            inventoryBox.appendChild(item)
-        })
-    }
+        item.addEventListener('mouseenter',renderItemINFO(item,data[0]))
+        item.addEventListener('mouseout',() => {
+            const itemTextDiv = document.getElementById('itemInfo')
+            item.removeChild(itemTextDiv)
+        });
+    })
+    return item
+
 }
 
 document.getElementById('quiz').addEventListener('click',onClickQuizButton)
@@ -181,4 +176,4 @@ document.getElementById('draw').addEventListener('click',onClickDrawButton)
 
 
 export {renderQuizBox, onClickMathButton,onClickItem,onClickEnglishButton,
-        onClickQuizButton,renderDrawBox,onClickDrawButton,getRandomItem} 
+        onClickQuizButton,renderDrawBox,onClickDrawButton,makeItem}

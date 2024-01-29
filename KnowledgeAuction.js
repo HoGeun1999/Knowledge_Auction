@@ -1,8 +1,9 @@
-import {renderQuizBox}   from "./KnowledgeAuctionGetItem.js"
-import {renderEnforceBox} from "./KnowledgeAuctionUpgrade.js"
-
-export let inventoryBox = document.getElementById('inventory')
-
+import {renderQuizBox}   from "./getItem.js"
+import {renderEnforceBox} from "./Upgrade.js"
+import {renderInventoryBox} from "./Inventory.js"
+import {renderCollectionBox } from "./collection.js"
 
 renderQuizBox()
 renderEnforceBox()
+renderInventoryBox()
+renderCollectionBox()

@@ -76,15 +76,33 @@ body{
 } */
 
 #enforceBox{
-    height: 100px;
-    width: 100px;
+    height: 150px;
+    width: 150px;
     overflow-x: hidden;
     margin-left: 30px;
     margin-top: 50px;
     border: 1px solid black;
 }
 
+.editBox{
+    height: 100px;
+    width: 100px;
+    overflow-x: hidden;
+    margin-left: 30px;
+    margin-top: 50px;
+    border: 1px solid black;
+    float: left;
+}
+
 .item{
+    border: 1px solid black;
+    height: 100px;
+    width: 100px;
+    margin-left: 10px;
+    float: left;
+}
+
+.itemInventory{
     border: 1px solid black;
     height: 100px;
     width: 100px;
@@ -110,4 +128,12 @@ body{
     height: auto;
     padding: 10px;
     z-index: 10;
+}
+
+
+.collectionTab{
+    border: 1px solid black;
+    height: 30px;
+    display: flex;
+    align-items: center;
 }
