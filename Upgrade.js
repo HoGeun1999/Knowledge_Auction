@@ -1,7 +1,8 @@
 let upgradeBox = document.getElementById('upgrade')
 import { dragged } from "./getItem.js"
 export let upgradeState = 1
-
+export let enforceBoxList = []
+export let editBoxList = []
 function renderEnforceBox(){
     upgradeState = 1
     upgradeBox.replaceChildren()

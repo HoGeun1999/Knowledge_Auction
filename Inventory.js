@@ -1,11 +1,13 @@
-import { renderEnforceBox,renderEditBox, upgradeState } from "./Upgrade.js"
-import {makeItem} from "./getItem.js"
+import { renderEnforceBox, renderEditBox, upgradeState,enforceBoxList,editBoxList } from "./Upgrade.js"
+import { makeItem } from "./getItem.js"
 import { dragged } from "./getItem.js"
 let inventory = document.getElementById('inventory')
-
 let isFull = 0
-function renderItemINFO(item,data){
-    return function(){
+export const inventoryItemList = []
+
+
+function renderItemINFO(item, data) {
+    return function () {
         const itemInfoText = document.createElement('div')
         itemInfoText.innerHTML = '아이템 정보창' + '<br>' + '지식:' + data.name + '<br>' + '희귀도:' + data.rarity
         itemInfoText.id = 'itemInfo'
@@ -14,81 +16,63 @@ function renderItemINFO(item,data){
         itemInfoText.style.top = rect.y + 10;
         item.appendChild(itemInfoText)
     }
-    
-}
-
-function onClickItem(item){
-    // return function(){
-    //     const enforceBox = document.getElementById('enforceBox')
-    //     const upgradeBox = document.getElementById('upgrade')
-    //     const inventory = document.getElementById('inventory')
-    //     if(upgradeState == 1 && isFull == 0){
-    //         inventory.removeChild(item)
-    //         upgradeBox.removeChild(enforceBox)
-    //         item.addEventListener('click',onClickEnforceItem(item))
-    //         isFull = 1
-    //         upgradeBox.appendChild(item)
-    //     }
-    //     else{
-    //         isFull = 0
-    //         inventory.appendChild(itme)
-    //         renderEnforceBox()
-    //     }
-    // }
 
 }
 
-function onClickEnforceItem(item){
-
-}
-
-// function onClickItem(item){
-//     return () => {
-//         const enforceBox = document.getElementById('enforceBox')
-//         const upgradeBox = document.getElementById('upgrade')
-//         const inventory = document.getElementById('inventory')
-//         // const newItem = document.createElement('div')
-//         // newItem.className = 'item'
-//         // newItem.innerText = data.name
-//         // newItem.addEventListener('click',onClickEnforceItem(newItem,data))
-//         if(upgradeState == 1 && isFull == 0){
-
-//             inventory.removeChild(item)
-//             upgradeBox.removeChild(enforceBox)
-//             item.addEventListener('click',onClickEnforceItem(item))
-//             upgradeBox.appendChild(item)
-
-//         }
-//         isFull = 1
-//     }
-// }
-
-// function onClickEnforceItem(item,isFull){
-//     isFull = 0
-//     return () => {
-//     const inventory = document.getElementById('inventory')
-//     renderEnforceBox()
-//     inventory.appendChild(item)
-//     item.addEventListener('click',onClickItem(item))
-//     }
-// }
-
-
-
-function renderInventoryBox(){
-    inventory.addEventListener("dragover", (e) => {
-        e.preventDefault();
-    })
-    inventory.addEventListener("drop",(e)=>{
-        let lastLocation = dragged.parentNode
-        e.preventDefault()
-        e.target.classList.remove("dragging");
-        dragged.parentNode.removeChild(dragged)
-        e.target.appendChild(dragged)
-        lastLocation.classList.remove('full') 
-        console.log('why')
-    })
+function onClickItem(item,data) {
+    return () => {
+        const enforceBox = document.getElementById('enforceBox')
+        const upgradeBox = document.getElementById('upgrade')
+        const inventory = document.getElementById('inventory')
+        console.log(isFull)
+        if(upgradeState == 1 && isFull == 0){
+            const newItem = document.createElement('div')
+            inventory.removeChild(item)
+            upgradeBox.removeChild(enforceBox)
+            newItem.className = 'item'
+            newItem.innerHTML = data[0].name + '<br>' + data[0].level
+            newItem.dataset.inventoryId = data[1]
+            newItem.addEventListener('click',onClickEnforceItem(data))
+            upgradeBox.appendChild(newItem)
+            isFull = 1
+        }
+        if(upgradeState == 2 && isFull == 0){
+            console.log(1000)
+        }
+    }
 }
 
 
-export {renderItemINFO,onClickItem,renderInventoryBox}
+function onClickEnforceItem(data) {
+    return () => {
+        const inventory = document.getElementById('inventory')
+        const newItem = document.createElement('div')
+        newItem.className = 'item'
+        newItem.innerHTML = data[0].name + '<br>' + data[0].level
+        newItem.dataset.inventoryId = data[1]
+        newItem.addEventListener('click',onClickItem(newItem,data))
+        renderEnforceBox()
+        inventory.appendChild(newItem)
+        isFull = 0
+    }
+}
+
+function onClickEditItem(item) {
+    return () => {
+        const inventory = document.getElementById('inventory')
+        renderEnforceBox()
+        console.log(item.id)
+        const newItem = makeItem(item.id)
+        inventory.appendChild(newItem)
+        console.log(isFull)
+        isFull = 0
+    }
+}
+
+function renderInventoryBox() {
+
+
+}
+
+
+export { renderItemINFO, onClickItem, renderInventoryBox }

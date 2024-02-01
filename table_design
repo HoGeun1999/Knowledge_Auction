@@ -10,3 +10,11 @@ combination recipe VARCHAR / arr?,
 total amount INT NOT NULL
 total amount rate of change INT NOT NULL,
 )
+
+
+CREATE TABLE knowledge (
+id BINARY(16)  DEFAULT (UUID_TO_BIN(UUID()))
+name VARCHAR(30) NOT NULL,
+level INT(4) NOT NULL,
+rarity VARCHAR (30) NOT NULL
+);

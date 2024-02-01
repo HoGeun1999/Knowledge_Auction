@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const cors = require('cors');
 const mysql = require('mysql');
+const { v4: uuidv4 } = require('uuid');
 
 const connection = mysql.createConnection({
   host     : 'localhost',
@@ -39,16 +40,30 @@ app.use(cors({
 })); 
 
  
+// app.get('/item/', function(req, res) {
+//   let { itemName } = req.params;
+//   console.log(itemName)
+//   connection.query(`SELECT * FROM test WHERE name = '${itemName}'` , (error, rows, fields) => {
+//     if (error) throw error;
+//     res.send(rows)
+//   });
+// });
 
-
-//app.use('/items', usersRouter);
-  
-app.get('/item/:itemId', function(req, res) {
-  let { itemId } = req.params;
-  connection.query('SELECT * FROM knowledge WHERE id =' + itemId, (error, rows, fields) => {
-    if (error) throw error;
-    res.send(rows)
-  });
+app.post("/item", function(req, res){
+  const item = req.body;
+  const uuid = uuidv4();
+  const selectQuery = `SELECT * FROM knowledge WHERE name = '${item.name}' AND level = ` + item.level   
+  connection.query(selectQuery, (err, rows, fields) => {
+    if (err) throw err; 
+    const getItem = rows[0]
+    console.log(rows[0],rows)
+    const insertQuery = `INSERT INTO inventory (id, itemId) VALUES ('${uuid}', '${rows[0].id}')`
+    connection.query(insertQuery,(err, result, fields) => {
+      if (err) throw err; 
+      const sendData = [rows[0],uuid]
+      res.send(sendData)
+    })
+  }); 
 });
 
 

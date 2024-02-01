@@ -1,10 +1,12 @@
 import englishWord from "./englishQuizObject.js"
-import { renderItemINFO,onClickItem } from "./Inventory.js"
+import { renderItemINFO,onClickItem,inventoryItemList, renderInventoryBox } from "./Inventory.js"
+import { knowledgeObject } from "./KnowledgeObject.js"
 export let dragged
 let inventoryBox =document.getElementById('inventory')
 let getItemBox = document.getElementById('getItem')
-const nomalDrawList = [1,2,3,4,5,6]
-const specialDrawList = [7]
+
+const nomalDrawList = ['수학','영어','과학']
+const specialDrawList = ['미적분학']
 
 function renderQuizBox(){
     getItemBox.replaceChildren()
@@ -109,10 +111,16 @@ function renderDrawBox(){
     specialDrawButton.className = 'drawButton'
     nomalDrawButton.addEventListener('click',function(){
         const randomNum = Math.floor(Math.random() * nomalDrawList.length)
-        const item = makeItem(nomalDrawList[randomNum])
+        const item = makeItem(nomalDrawList[randomNum],1)
+        // inventoryItemList.push([nomalDrawList[randomNum]])
+        inventoryBox.appendChild(item)
+        // renderInventoryBox()
+    })
+    specialDrawButton.addEventListener('click',function(){
+        const randomNum = Math.floor(Math.random() * specialDrawList.length)
+        const item = makeItem(specialDrawList[randomNum],1)
         inventoryBox.appendChild(item)
     })
-    specialDrawButton.addEventListener('click',makeItem(specialDrawList))
     getItemBox.appendChild(nomalDrawButton)
     getItemBox.appendChild(specialDrawButton)
 }
@@ -121,55 +129,40 @@ function onClickDrawButton(){
     renderDrawBox()
 }
 
-
-// function makeItem(numList,location){
-//     return function(){
-//         const randomNum = Math.floor(Math.random() * numList.length)
-//         const item = document.createElement('div')
-//         let url = 'http://localhost:3000/item/' + numList[randomNum]
-//         fetch(url)
-//         .then(function(response){
-//             return response.json() 
-//         })
-//         .then(function(data){
-//             item.className = 'item'
-//             item.innerHTML = data[0].name + '<br>' + data[0].level
-//             item.addEventListener('click',onClickItem(item))
-//             item.addEventListener('mouseenter',renderItemINFO(item,data[0]))
-//             item.addEventListener('mouseout',() => {
-//                 const itemTextDiv = document.getElementById('itemInfo')
-//                 item.removeChild(itemTextDiv)
-//             });
-//             location.appendChild(item)
-//         })
-//     }
-// }
-
-function makeItem(itemId){
+function makeItem(itemName,itemLevel){
     const item = document.createElement('div')
-    let url = 'http://localhost:3000/item/' + itemId
-    fetch(url)
+    let url = 'http://localhost:3000/item/'
+    console.log(url)
+    fetch(url, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ name: itemName, level: itemLevel }),
+    })
     .then(function(response){
-        return response.json() 
+        return response.json()
     })
     .then(function(data){
+        console.log(data)
         item.className = 'item'
         item.innerHTML = data[0].name + '<br>' + data[0].level
-        // item.addEventListener('click',onClickItem(item))
-        item.draggable = 'true'
-        item.addEventListener('dragstart',(e) =>{
-            dragged = e.target       
-            e.target.classList.add("dragging");
-        })
-        item.addEventListener('mouseenter',renderItemINFO(item,data[0]))
+        item.dataset.inventoryId = data[1]
+        item.addEventListener('click',onClickItem(item,data))
+        // item.draggable = 'true'
+        // item.addEventListener('dragstart',(e) =>{
+        //     dragged = e.target       
+        //     e.target.classList.add("dragging");
+        // })
+        item.addEventListener('mouseenter',renderItemINFO(item,data))
         item.addEventListener('mouseout',() => {
             const itemTextDiv = document.getElementById('itemInfo')
             item.removeChild(itemTextDiv)
-        });
+        })
     })
+    
     return item
-
 }
+
+
 
 document.getElementById('quiz').addEventListener('click',onClickQuizButton)
 document.getElementById('draw').addEventListener('click',onClickDrawButton)
