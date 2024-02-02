@@ -1,8 +1,8 @@
-let upgradeBox = document.getElementById('upgrade')
 import { dragged } from "./getItem.js"
 export let upgradeState = 1
-export let enforceBoxList = []
-export let editBoxList = []
+
+const upgradeBox = document.getElementById('upgrade')
+
 function renderEnforceBox(){
     upgradeState = 1
     upgradeBox.replaceChildren()
@@ -39,25 +39,26 @@ function onClickEnforceButton(){
 }
 
 
+
 function renderEditBox(){
     upgradeState = 2
     upgradeBox.replaceChildren()
     upgradeBox.className = 'editState'
     const editWrap = document.createElement('div')
     editWrap.id = 'editWrap'
-    const editItem1 = document.createElement('div')
-    const editItem2 = document.createElement('div')
-    editItem1.id = 'editBox1'
-    editItem2.id = 'editBox2'
-    editItem1.className = 'editBox'
-    editItem2.className = 'editBox'
-    editItem1.innerHTML = '합성할 아이템'
-    editItem2.innerHTML = '합성할 아이템'
-    editItem1.addEventListener("dragover", (e) => {
+    const editBoxLeft = document.createElement('div')
+    const editBoxRight = document.createElement('div')
+    editBoxLeft.id = 'editBoxLeft'
+    editBoxRight.id = 'editBoxRight'
+    editBoxLeft.className = 'editBox'
+    editBoxRight.className = 'editBox'
+    editBoxLeft.innerHTML = '합성할 아이템'
+    editBoxRight.innerHTML = '합성할 아이템'
+    editBoxLeft.addEventListener("dragover", (e) => {
         e.preventDefault();
     })
-    editItem1.addEventListener("drop",(e)=>{
-        if(editItem1.classList.contains('full')){
+    editBoxLeft.addEventListener("drop",(e)=>{
+        if(editBoxLeft.classList.contains('full')){
             return
         }
         else{
@@ -66,15 +67,15 @@ function renderEditBox(){
             dragged.parentNode.removeChild(dragged)
             e.target.appendChild(dragged)
             console.log(dragged)
-            editItem1.classList.add('full') 
+            editBoxLeft.classList.add('full') 
         }
 
     })
-    editItem2.addEventListener("dragover", (e) => {
+    editBoxRight.addEventListener("dragover", (e) => {
         e.preventDefault();
     })
-    editItem2.addEventListener("drop",(e)=>{
-        if(editItem2.classList.contains('full')){
+    editBoxRight.addEventListener("drop",(e)=>{
+        if(editBoxRight.classList.contains('full')){
             return
         }
         else{
@@ -83,7 +84,7 @@ function renderEditBox(){
             dragged.parentNode.removeChild(dragged)
             e.target.appendChild(dragged)
             console.log(dragged)
-            editItem2.classList.add('full') 
+            editBoxRight.classList.add('full') 
         }
 
     })
@@ -92,9 +93,9 @@ function renderEditBox(){
     plusDiv.innerHTML = '+'
     const editButton = document.createElement('button')
     editButton.innerHTML = '합성하기'
-    upgradeBox.appendChild(editItem1)
+    upgradeBox.appendChild(editBoxLeft)
     upgradeBox.appendChild(plusDiv)
-    upgradeBox.appendChild(editItem2)
+    upgradeBox.appendChild(editBoxRight)
     upgradeBox.appendChild(editButton)
 }
 
@@ -102,7 +103,6 @@ function onClickEditButton(){
     upgradeBox.replaceChildren()
     renderEditBox()
 }
-
 
 
 document.getElementById('editTabButton').addEventListener('click',onClickEditButton)

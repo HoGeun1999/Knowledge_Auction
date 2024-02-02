@@ -1,5 +1,5 @@
 import englishWord from "./englishQuizObject.js"
-import { renderItemINFO,onClickItem,inventoryItemList, renderInventoryBox } from "./Inventory.js"
+import { renderItemINFO,onClickItem, renderInventoryBox } from "./Inventory.js"
 import { knowledgeObject } from "./KnowledgeObject.js"
 export let dragged
 let inventoryBox =document.getElementById('inventory')
@@ -111,14 +111,14 @@ function renderDrawBox(){
     specialDrawButton.className = 'drawButton'
     nomalDrawButton.addEventListener('click',function(){
         const randomNum = Math.floor(Math.random() * nomalDrawList.length)
-        const item = makeItem(nomalDrawList[randomNum],1)
+        const item = makeRandomItem(nomalDrawList[randomNum],1)
         // inventoryItemList.push([nomalDrawList[randomNum]])
         inventoryBox.appendChild(item)
         // renderInventoryBox()
     })
     specialDrawButton.addEventListener('click',function(){
         const randomNum = Math.floor(Math.random() * specialDrawList.length)
-        const item = makeItem(specialDrawList[randomNum],1)
+        const item = makeRandomItem(specialDrawList[randomNum],1)
         inventoryBox.appendChild(item)
     })
     getItemBox.appendChild(nomalDrawButton)
@@ -129,7 +129,7 @@ function onClickDrawButton(){
     renderDrawBox()
 }
 
-function makeItem(itemName,itemLevel){
+function makeRandomItem(itemName,itemLevel){
     const item = document.createElement('div')
     let url = 'http://localhost:3000/item/'
     console.log(url)
@@ -169,4 +169,4 @@ document.getElementById('draw').addEventListener('click',onClickDrawButton)
 
 
 export {renderQuizBox, onClickMathButton,onClickItem,onClickEnglishButton,
-        onClickQuizButton,renderDrawBox,onClickDrawButton,makeItem}
+        onClickQuizButton,renderDrawBox,onClickDrawButton,makeRandomItem}
