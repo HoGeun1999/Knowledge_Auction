@@ -98,8 +98,10 @@ body{
     border: 1px solid black;
     height: 100px;
     width: 100px;
-    margin-left: 10px;
-    float: left;
+    margin: 5px 5px 5px 5px;
+    display: inline-table;
+    position: relative;
+    /* float: left; */
 }
 
 .itemInventory{
@@ -136,4 +138,10 @@ body{
     height: 30px;
     display: flex;
     align-items: center;
+}
+
+#sellBox{
+    border: 1px solid black;
+    height: 250;
+    width: 400px;
 }

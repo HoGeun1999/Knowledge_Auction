@@ -40,24 +40,33 @@ app.use(cors({
 })); 
 
  
-// app.get('/item/', function(req, res) {
-//   let { itemName } = req.params;
-//   console.log(itemName)
-//   connection.query(`SELECT * FROM test WHERE name = '${itemName}'` , (error, rows, fields) => {
-//     if (error) throw error;
-//     res.send(rows)
-//   });
-// });
+app.get('/item/:inventoryID', function(req, res) {
+  let { inventoryID } = req.params;
+  connection.query(`SELECT * FROM knowledge WHERE id = (SELECT itemId FROM inventory WHERE id = '${inventoryID}')` , (error, rows, fields) => {
+    if (error) throw error;
+      res.send(rows)
+  });
+});
+
+app.get('/inventoryItemGet/:inventoryID', function(req, res) {
+  let { inventoryID } = req.params;
+  connection.query(`SELECT * FROM knowledge WHERE id = (SELECT itemId FROM inventory WHERE id = '${inventoryID}')` , (error, rows, fields) => {
+    if (error) throw error;
+      res.send([rows,inventoryID])
+  });
+});
 
 app.post("/item", function(req, res){
   const item = req.body;
   const uuid = uuidv4();
   const selectQuery = `SELECT * FROM knowledge WHERE name = '${item.name}' AND level = ` + item.level   
+  console.log('selectQuery:' + selectQuery)
   connection.query(selectQuery, (err, rows, fields) => {
     if (err) throw err; 
     const getItem = rows[0]
-    console.log(rows[0],rows)
+    console.log('getdata:'+ rows[0],rows)
     const insertQuery = `INSERT INTO inventory (id, itemId) VALUES ('${uuid}', '${rows[0].id}')`
+    console.log(' insertQuery :' + insertQuery)
     connection.query(insertQuery,(err, result, fields) => {
       if (err) throw err; 
       const sendData = [rows[0],uuid]
@@ -65,6 +74,42 @@ app.post("/item", function(req, res){
     })
   }); 
 });
+
+app.post("/collection", function(req, res){
+  const item = req.body;
+  const selectQuery = `SELECT * FROM knowledge WHERE name = '${item.name}' AND level = ` + item.level   
+  console.log('selectQuery:' + selectQuery)
+  connection.query(selectQuery, (err, rows, fields) => {
+    if (err) throw err; 
+      res.send(rows)
+  })
+}); 
+
+app.get('/sellItem/:inventoryID', function(req, res) {
+  let { inventoryID } = req.params;
+  connection.query(`SELECT * FROM knowledge WHERE id = (SELECT itemId FROM inventory WHERE id = '${inventoryID}')` , (error, rows, fields) => {
+    if (error) throw error;
+      res.send(rows)
+  });
+  connection.query(`DELETE FROM inventory WHERE id = '${inventoryID}'` , (error, rows, fields) => {
+    if (error) throw error;
+  });
+});
+
+app.get('/delItem/:inventoryID', function(req, res) {
+  let { inventoryID } = req.params;
+  connection.query(`DELETE FROM inventory WHERE id = '${inventoryID}'` , (error, rows, fields) => {
+    if (error) throw error;
+  });
+});
+
+app.get('/getInventory/', function(req, res) {
+  connection.query('SELECT * FROM inventory' , (error, rows, fields) => {
+    if (error) throw error; 
+    res.send(rows)
+  });
+});
+
 
 
 // catch 404 and forward to error handler
