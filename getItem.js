@@ -1,9 +1,11 @@
 import englishWord from "./englishQuizObject.js"
-import { renderItemINFO,onClickItem, renderInventoryBox, updateNormalRandomTicket, updateSpecialRandomTicket
-        , userNormalRandomTicket, userSpecialRandomTicket, updateInventoryINFO, updateUserMoney, userMoney } from "./Inventory.js"
+import {
+    renderItemINFO, onClickItem, renderInventoryBox, updateNormalRandomTicket, updateSpecialRandomTicket
+    , userNormalRandomTicket, userSpecialRandomTicket, updateInventoryINFO, updateUserMoney, userMoney
+} from "./Inventory.js"
 import { knowledgeObject } from "./KnowledgeObject.js"
 export let dragged
-let inventoryBox =document.getElementById('inventory')
+let inventoryBox = document.getElementById('inventory')
 let getItemBox = document.getElementById('getItem')
 let sellState = false
 let sellItemCount = 0
@@ -11,17 +13,17 @@ const quizButton = document.getElementById('quiz')
 const drawButton = document.getElementById('draw')
 const sellButton = document.getElementById('sell')
 // const nomalDrawList = ['국어','수학','과학','사회','정보기술','체육','미술','음악','역사']
-const nomalDrawList = ['수학','정보기술']
+const nomalDrawList = ['수학', '정보기술']
 const specialDrawList = ['전산학']
 
-function renderQuizBox(){
+function renderQuizBox() {
     getItemBox.replaceChildren()
     const mathQuizButton = document.createElement('button')
     mathQuizButton.type = 'button'
-    mathQuizButton.innerHTML = '수학'   
+    mathQuizButton.innerHTML = '수학'
     mathQuizButton.className = 'quizButton'
     mathQuizButton.id = 'mathQuizButton'
-    mathQuizButton.addEventListener("click",onClickMathButton)
+    mathQuizButton.addEventListener("click", onClickMathButton)
     getItemBox.appendChild(mathQuizButton)
 
     const englishQuizButton = document.createElement('button')
@@ -29,15 +31,15 @@ function renderQuizBox(){
     englishQuizButton.innerHTML = '영어'
     englishQuizButton.className = 'quizButton'
     englishQuizButton.id = 'englishQuizButton'
-    englishQuizButton.addEventListener("click",onClickEnglishButton)
+    englishQuizButton.addEventListener("click", onClickEnglishButton)
     getItemBox.appendChild(englishQuizButton)
 }
 
-function onClickMathButton(){
+function onClickMathButton() {
     renderMathQuiz()
 }
 
-function renderMathQuiz(){
+function renderMathQuiz() {
     getItemBox.replaceChildren()
     const mathQuiz = document.createElement('div')
     const randomNum1 = Math.floor(Math.random() * 10 + 1);
@@ -48,27 +50,27 @@ function renderMathQuiz(){
     mathAnswerInput.type = 'text'
     const answerCheckButton = document.createElement('button')
     answerCheckButton.innerHTML = '입력'
-    answerCheckButton.addEventListener('click',onClickmathAnswerButton(mathAnswerInput,mathAnswer))
+    answerCheckButton.addEventListener('click', onClickmathAnswerButton(mathAnswerInput, mathAnswer))
     getItemBox.appendChild(mathQuiz)
     getItemBox.appendChild(mathAnswerInput)
     getItemBox.appendChild(answerCheckButton)
 }
 
-function onClickmathAnswerButton(mathAnswerInput,mathAnswer){
-    return function(){
-        if (mathAnswerInput.value == mathAnswer){
+function onClickmathAnswerButton(mathAnswerInput, mathAnswer) {
+    return function () {
+        if (mathAnswerInput.value == mathAnswer) {
             const mathItem = document.createElement('div')
             mathItem.innerHTML = '수학'
             mathItem.className = 'item'
             mathItem.id = 1
-            mathItem.addEventListener("click",onClickItem(mathItem))
+            mathItem.addEventListener("click", onClickItem(mathItem))
         }
         else
-            console.log('wrong') 
+            console.log('wrong')
     }
 }
 
-function renderEnglishQuiz(){
+function renderEnglishQuiz() {
     getItemBox.replaceChildren()
     const randomNum = Math.floor(Math.random() * 3);
     const englishQuiz = document.createElement('div')
@@ -77,38 +79,38 @@ function renderEnglishQuiz(){
     englishAnswerInput.type = 'text'
     const answerCheckButton = document.createElement('button')
     answerCheckButton.innerHTML = '입력'
-    answerCheckButton.addEventListener('click',onClickEnAnswerButton(englishAnswerInput,englishWord[randomNum][0]))
+    answerCheckButton.addEventListener('click', onClickEnAnswerButton(englishAnswerInput, englishWord[randomNum][0]))
     getItemBox.appendChild(englishQuiz)
     getItemBox.appendChild(englishAnswerInput)
     getItemBox.appendChild(answerCheckButton)
 }
 
-function onClickEnAnswerButton(englishAnswerInput,answer){
-    return function(){
+function onClickEnAnswerButton(englishAnswerInput, answer) {
+    return function () {
         console.log(englishAnswerInput.value, answer)
-        if (englishAnswerInput.value == answer){
+        if (englishAnswerInput.value == answer) {
             const englishItem = document.createElement('div')
             englishItem.innerHTML = '영어'
             englishItem.className = 'item'
             englishItem.id = 2
-            englishItem.addEventListener("click",onClickItem(englishItem))
+            englishItem.addEventListener("click", onClickItem(englishItem))
             inventoryBox.appendChild(englishItem)
         }
         else
             console.log('worng')
-    }   
+    }
 }
 
-function onClickEnglishButton(){
+function onClickEnglishButton() {
     renderEnglishQuiz()
 }
 
-function onClickQuizButton(){
+function onClickQuizButton() {
     changeSellState(false)
-    renderQuizBox()  
+    renderQuizBox()
 }
 
-function renderDrawBox(){
+function renderDrawBox() {
     getItemBox.replaceChildren()
     const nomalDrawButton = document.createElement('button')
     const specialDrawButton = document.createElement('button')
@@ -116,22 +118,37 @@ function renderDrawBox(){
     specialDrawButton.innerHTML = '고급뽑기'
     nomalDrawButton.className = 'drawButton'
     specialDrawButton.className = 'drawButton'
-    nomalDrawButton.addEventListener('click',function(){
-        if(userNormalRandomTicket > 0){
-            const randomNum = Math.floor(Math.random() * nomalDrawList.length)
-            const item = makeRandomItem(nomalDrawList[randomNum],1)    
-            inventoryBox.appendChild(item)
-            updateNormalRandomTicket(-1)
-            updateInventoryINFO()
-        }
-        
+    nomalDrawButton.addEventListener('click', function () {
+        const url = 'http://localhost:3000/user/normalTicketCheck'
+        fetch(url)
+            .then((response) => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text)
+                    })
+                    
+                }
+
+                return response.json()
+            })
+            .then(
+                (data) => {
+                    console.log()
+                    const item = makeItem(data[0][0],data[1])
+                    inventoryBox.appendChild(item)
+                },
+                (error) => {
+                    alert(error)
+                }
+            )
+
     })
-    specialDrawButton.addEventListener('click',function(){
-        if(userSpecialRandomTicket >0){
+    specialDrawButton.addEventListener('click', function () {
+        if (userSpecialRandomTicket > 0) {
             const randomNum = Math.floor(Math.random() * specialDrawList.length)
-            const item = makeRandomItem(specialDrawList[randomNum],1)
-            inventoryBox.appendChild(item)  
-            updateSpecialRandomTicket(-1)     
+            const item = makeItem(specialDrawList[randomNum], 1)
+            inventoryBox.appendChild(item)
+            updateSpecialRandomTicket(-1)
             updateInventoryINFO()
         }
     })
@@ -139,77 +156,58 @@ function renderDrawBox(){
     getItemBox.appendChild(specialDrawButton)
 }
 
-function onClickDrawButton(){
+function onClickDrawButton() {
     changeSellState(false)
     renderDrawBox()
 }
 
-function makeRandomItem(itemName,itemLevel){
+function makeItem(itemObject,inventoryId) {
     const item = document.createElement('div')
-    let url = 'http://localhost:3000/item/'
-    fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ name: itemName, level: itemLevel }),
+    item.className = 'item'
+    item.innerHTML = itemObject.name + '<br>' + itemObject.level
+    item.dataset.inventoryId = inventoryId
+    item.addEventListener('click', onClickItem(item, itemObject))
+    item.addEventListener('mouseenter', renderItemINFO(item, itemObject))
+    item.addEventListener('mouseout', () => {
+        const itemTextDiv = document.getElementById('itemInfo')
+        item.removeChild(itemTextDiv)
     })
-    .then(function(response){
-        return response.json()
-    })
-    .then(function(data){
-        item.className = 'item'
-        item.innerHTML = data[0].name + '<br>' + data[0].level
-        item.dataset.inventoryId = data[1]
-        item.addEventListener('click',onClickItem(item,data))
-        // item.draggable = 'true'
-        // item.addEventListener('dragstart',(e) =>{
-        //     dragged = e.target       
-        //     e.target.classList.add("dragging");
-        // })
-        item.addEventListener('mouseenter',renderItemINFO(item,data))
-        item.addEventListener('mouseout',() => {
-            const itemTextDiv = document.getElementById('itemInfo')
-            item.removeChild(itemTextDiv)
-        })
-
-        return item
-    })
-    
     return item
 }
 
-function renderSellItemBox(){
+function renderSellItemBox() {
     getItemBox.replaceChildren()
     sellState = true
     const sellBox = document.createElement('div')
     sellBox.id = 'sellBox'
     sellBox.innerHTML = '판매할 아이템을 선택하세요'
     const sellButton = document.createElement('button')
-    sellButton.addEventListener('click',onClickSellButton)
+    sellButton.addEventListener('click', onClickSellButton)
     sellButton.id = 'sellButton'
     sellButton.innerHTML = '판매'
     getItemBox.appendChild(sellBox)
     getItemBox.appendChild(sellButton)
 }
 
-function onClickSellButton(){
-    let sumSellItemCost= 0
+function onClickSellButton() {
+    let sumSellItemCost = 0
     let sellItems = []
     const sellItemList = sellBox.children;
-    for(let i = 0; i < sellItemList.length; i++){
+    for (let i = 0; i < sellItemList.length; i++) {
         let url = 'http://localhost:3000/sellItem/' + sellItemList[i].dataset.inventoryId
         const p = fetch(url)
-        .then(function(response){
-            return response.json()
-        })
-        .then(function(data){
-            return data[0]
-        })
+            .then(function (response) {
+                return response.json()
+            })
+            .then(function (data) {
+                return data[0]
+            })
         sellItems.push(p)
         console.log(sellItems)
     }
 
     Promise.all(sellItems).then((values) => {
-        for(let i = 0; i < values.length; i++){
+        for (let i = 0; i < values.length; i++) {
             sumSellItemCost = sumSellItemCost + values[i].price
         }
         console.log(values);
@@ -219,28 +217,30 @@ function onClickSellButton(){
         alert(`총판매금액 : ${sumSellItemCost}`)
     });
     renderSellItemBox()
-    changeGetItemButtonState(false) 
+    changeGetItemButtonState(false)
 }
 
-function changeSellState(state){
+function changeSellState(state) {
     sellState = state
 }
 
-function updateSellCount(change){
+function updateSellCount(change) {
     sellItemCount = sellItemCount + change
 }
 
-function changeGetItemButtonState(state){
+function changeGetItemButtonState(state) {
     quizButton.disabled = state
     drawButton.disabled = state
     sellButton.disabled = state
 }
 
 
-document.getElementById('quiz').addEventListener('click',onClickQuizButton)
-document.getElementById('draw').addEventListener('click',onClickDrawButton)
-document.getElementById('sell').addEventListener('click',renderSellItemBox)
+document.getElementById('quiz').addEventListener('click', onClickQuizButton)
+document.getElementById('draw').addEventListener('click', onClickDrawButton)
+document.getElementById('sell').addEventListener('click', renderSellItemBox)
 
-export {renderQuizBox, onClickMathButton,onClickItem,onClickEnglishButton,
-        onClickQuizButton,renderDrawBox,onClickDrawButton,makeRandomItem,
-        changeSellState, sellState, sellItemCount, updateSellCount, changeGetItemButtonState}
+export {
+    renderQuizBox, onClickMathButton, onClickItem, onClickEnglishButton,
+    onClickQuizButton, renderDrawBox, onClickDrawButton, makeItem,
+    changeSellState, sellState, sellItemCount, updateSellCount, changeGetItemButtonState
+}
