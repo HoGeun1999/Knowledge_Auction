@@ -1,4 +1,4 @@
-import { dragged, makeRandomItem,changeGetItemButtonState } from "./getItem.js"
+import { dragged,changeGetItemButtonState, makeItem} from "./getItem.js"
 import { enforceTable, enforceCostTable} from "./KnowledgeObject.js"
 import { setIsfull, userMoney, isFull, updateInventoryINFO, updateUserMoney, leftFull, rightFull} from "./Inventory.js"
 export let upgradeState = 1
@@ -69,7 +69,7 @@ function onClickEnforceButton(){
             changeGetItemButtonState(false)
         }
         else if(randomNum<=enforceCheck){
-            const newItem = makeRandomItem(data[0].name,data[0].level + 1)
+            const newItem = makeItem(data[0].name,data[0].level + 1)
             const inventory = document.getElementById('inventory')
             inventory.appendChild(newItem)
             setIsfull(0)
