@@ -1,5 +1,5 @@
 import { upgradeState, renderEnforceBox, renderEditBox } from "./Upgrade.js"
-import { sellState, sellItemCount, updateSellCount,makeItem } from "./getItem.js"
+import { sellState, sellItemCount, updateSellCount,makeItem, changeGetItemButtonState } from "./getItem.js"
 let inventory = document.getElementById('inventory')
 const enforceButton = document.getElementById('enforceTabButton')
 const editButton = document.getElementById('editTabButton')
@@ -43,13 +43,12 @@ function moveItemToUpgrade(item, moveLocation) {
 
 function onClickItem(item, data) {
     return () => {
+        console.log(data)
         const sellBox = document.getElementById('sellBox')
         const enforceBox = document.getElementById('enforceBox')
-        const newItem = makeItem(data)
+        const newItem = makeItem(data,item.dataset.inventoryId)
         if (sellState == true && sellItemCount == 0) {
-            quizButton.disabled = true
-            drawButton.disabled = true
-            sellButton.disabled = true
+            changeGetItemButtonState(true)
             inventory.removeChild(item)
             newItem.addEventListener('click', onClickSellItem(data, newItem))
             sellBox.innerHTML = ''
@@ -65,7 +64,7 @@ function onClickItem(item, data) {
             return
         }
 
-        if (data[0].level === 5) {
+        if (data.level === 5) {
             console.log('최고레벨')
             return true
         }
@@ -74,14 +73,10 @@ function onClickItem(item, data) {
             newItem.addEventListener('click', onClickEnforceItem(data))
             moveItemToUpgrade(newItem, enforceBox)
             isFull = 1
-            quizButton.disabled = true
-            drawButton.disabled = true
-            sellButton.disabled = true
+            changeGetItemButtonState(true)
         }
         else if (upgradeState == 2) {
-            quizButton.disabled = true
-            drawButton.disabled = true
-            sellButton.disabled = true
+            changeGetItemButtonState(true)
             const editBoxLeft = document.getElementById('editBoxLeft')
             const editBoxRight = document.getElementById('editBoxRight')
             if (leftFull === 0) {
@@ -102,17 +97,16 @@ function onClickItem(item, data) {
 
 function onClickEnforceItem(data) {
     return () => {
+        console.log(data)
         const inventory = document.getElementById('inventory')
-        const newItem = makeItem(data)
+        const newItem = makeItem(data,data.inventory_id)
 
         renderEnforceBox()
         inventory.appendChild(newItem)
         enforceButton.disabled = false;
         editButton.disabled = false;
         isFull = 0
-        quizButton.disabled = false
-        drawButton.disabled = false
-        sellButton.disabled = false
+        changeGetItemButtonState(false)
     }
 }
 
@@ -132,43 +126,25 @@ function onClickEditItem(data, item) {
         if (leftFull === 0 && rightFull === 0) {
             enforceButton.disabled = false;
             editButton.disabled = false;
-            quizButton.disabled = false
-            drawButton.disabled = false
-            sellButton.disabled = false
+            changeGetItemButtonState(false)
         }
     }
 }
 
 function onClickSellItem(data, item) {
     return () => {
+        console.log(data)
         const inventory = document.getElementById('inventory')
-        const newItem = makeItem(data)
+        const newItem = makeItem(data,data.inventory_id)
         sellBox.removeChild(item)
         inventory.appendChild(newItem)
         updateSellCount(-1)
         if (sellItemCount == 0) {
             sellBox.innerHTML = '판매할 아이템을 선택하세요'
-            quizButton.disabled = false
-            drawButton.disabled = false
-            sellButton.disabled = false
+            changeGetItemButtonState(false)
         }
     }
 }
-
-// function makeItem(data) {
-//     const newItem = document.createElement('div')
-//     newItem.className = 'item'
-//     newItem.innerHTML = data[0].name + '<br>' + data[0].level
-//     newItem.dataset.inventoryId = data[1]
-//     newItem.addEventListener('click', onClickItem(newItem, data))
-//     newItem.addEventListener('mouseenter', renderItemINFO(newItem, data))
-//     newItem.addEventListener('mouseout', () => {
-//         const itemTextDiv = document.getElementById('itemInfo')
-//         newItem.removeChild(itemTextDiv)
-//     })
-
-//     return newItem
-// }
 
 
 function renderInventoryBox() {
@@ -177,8 +153,7 @@ function renderInventoryBox() {
     const userItemINFO = document.createElement('div')
     const inventory = document.getElementById('inventory')
     userItemINFO.id = 'userItemINFO'
-    userItemINFO.innerHTML = `보유 금액: ${userMoney}, 일반티켓 : ${userNormalRandomTicket
-        }개, 특별티켓 : ${userSpecialRandomTicket}개`
+    updateInventoryINFO()
     userItemINFOwrap.appendChild(userItemINFO)
     inventory.appendChild(userItemINFOwrap)
 
@@ -202,23 +177,6 @@ function renderInventoryBox() {
         }
     }
     exec();
-
-    // fetch(url)
-    // .then(function(response){
-    //     return response.json()
-    // })
-    // // .then(function(data){
-    // //     console.log(data)
-    // // })
-    // const inventoryItem = []
-    // inventoryItem.push(p)
-    // console.log(inventoryItem)
-    // // Promise.all(p).then((values) => {
-    // //     for(let i = 0; i < values.length; i++){
-    // //         console.log(p)
-    // //     }     
-    // // });
-
 }
 
 function updateNormalRandomTicket(state) {
@@ -234,16 +192,17 @@ function updateUserMoney(cost) {
 
 }
 
+
 function updateInventoryINFO() {
+
     const url = 'http://localhost:3000/getUserData/'
     fetch(url)
     .then(function(response){
         return response.json()
     })
     .then(function(data){
-        console.log(data[0])
         const userItemINFO = document.getElementById('userItemINFO')
-        userItemINFO.innerHTML = `보유 금액: ${data[0].holdings}, 일반티켓 : ${data[0].userNormalRandomTicket}개, 
+        userItemINFO.innerHTML = `보유 금액: ${data[0].holdings}, 일반티켓 : ${data[0].normalTicket}개, 
         특별티켓 : ${data[0].specialTicket}개`
     })
 

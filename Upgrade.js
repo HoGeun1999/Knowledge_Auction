@@ -1,11 +1,13 @@
-import { dragged,changeGetItemButtonState, makeItem} from "./getItem.js"
-import { enforceTable, enforceCostTable} from "./KnowledgeObject.js"
-import { setIsfull, userMoney, isFull, updateInventoryINFO, updateUserMoney, leftFull, rightFull} from "./Inventory.js"
-export let upgradeState = 1
+import { dragged, changeGetItemButtonState, makeItem } from "./getItem.js"
+import { enforceTable, enforceCostTable } from "./KnowledgeObject.js"
+import { setIsfull, userMoney, isFull, updateInventoryINFO, updateUserMoney, leftFull, rightFull } from "./Inventory.js"
+import {checkColletion} from "./collection.js"
 
+export let upgradeState = 1
+const inventory = document.getElementById('inventory')
 const upgradeBox = document.getElementById('upgrade')
 
-function renderEnforceBox(){
+function renderEnforceBox() {
     upgradeState = 1
     upgradeBox.replaceChildren()
     const enforceBox = document.createElement('div')
@@ -15,83 +17,83 @@ function renderEnforceBox(){
     enforceBox.addEventListener("dragover", (e) => {
         e.preventDefault();
     })
-    enforceBox.addEventListener("drop",(e)=>{
-        if(enforceBox.classList.contains('full')){
+    enforceBox.addEventListener("drop", (e) => {
+        if (enforceBox.classList.contains('full')) {
             return
         }
-        else{
+        else {
             e.preventDefault()
             console.log(dragged.parentNode)
             dragged.parentNode.removeChild(dragged)
             e.target.appendChild(dragged)
-            enforceBox.classList.add('full') 
+            enforceBox.classList.add('full')
         }
 
     })
     const enforceButton = document.createElement('button')
     enforceButton.id = 'enforceButton'
     enforceButton.innerText = '강화하기'
-    enforceButton.addEventListener('click',onClickEnforceButton)
+    enforceButton.addEventListener('click', onClickEnforceButton)
     upgradeBox.appendChild(enforceBox)
     upgradeBox.appendChild(enforceButton)
 }
 
-function onClickEnforceTabButton(){
+function onClickEnforceTabButton() {
     renderEnforceBox()
 }
 
-function onClickEnforceButton(){
+function onClickEnforceButton() {
     const enforceBox = document.getElementById('enforceBox')
     const enforceItem = enforceBox.childNodes[0]
-    let url = 'http://localhost:3000/item/' + enforceItem.dataset.inventoryId
+    console.log(enforceItem)
+    let url = 'http://localhost:3000/items/enforce/' + enforceItem.dataset.inventoryId
     fetch(url)
-    .then(function(response){
-        return response.json()
-    })
-    .then(function(data){
-        if(userMoney < enforceCostTable[data[0].rarity][data[0].level-1]){
-            console.log('돈부족')
-            return 
-        }
-        else{
-            updateUserMoney(-enforceCostTable[data[0].rarity][data[0].level-1])
-        }
-        const itemRarity = data[0].rarity
-        const enforceProbability = enforceTable[itemRarity]
-        const randomNum = Math.floor(Math.random() * 10 + 1);
-        const enforceCheck = enforceProbability[data[0].level-1]
-        updateInventoryINFO()
-        if (randomNum === 10){
-            console.log('파괴')
-            setIsfull(0) 
-            renderEnforceBox()
-            delInventoryItem(enforceItem.dataset.inventoryId)
-            changeGetItemButtonState(false)
-        }
-        else if(randomNum<=enforceCheck){
-            const newItem = makeItem(data[0].name,data[0].level + 1)
-            const inventory = document.getElementById('inventory')
-            inventory.appendChild(newItem)
-            setIsfull(0)
-            delInventoryItem(enforceItem.dataset.inventoryId)
-            changeGetItemButtonState(false)
-            renderEnforceBox()
-        }
-        else{   
-            console.log('실패 / 하락 or 그대로')
-        }
-    })
-    
+        .then((response) => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(text)
+                })
+            }
+            return response.json()
+        })
+        .then(
+            (data) => {
+                updateInventoryINFO()
+                if(data.result === '강화 실패'){
+                    alert('강화 실패')
+                    return
+                }
+                else if(data.result === '파괴'){
+                    alert('아이템 파괴')
+                    renderEnforceBox()
+                    changeGetItemButtonState(false)
+                    setIsfull(0)  
+                    return
+                }
+                else{
+                    const newItem = makeItem(data.result[0][0],data.result[1])   
+                    inventory.appendChild(newItem)
+                    renderEnforceBox()
+                    changeGetItemButtonState(false)
+                    setIsfull(0)  
+                    checkColletion(data.result[0][0])
+                }
+            },
+            (error) => {
+                alert(error)
+            }
+        )
+
 }
 
-function delInventoryItem(inventoryId){
+function delInventoryItem(inventoryId) {
     console.log(inventoryId)
     let url = 'http://localhost:3000/delItem/' + inventoryId
     fetch(url)
 }
 
 
-function renderEditBox(){
+function renderEditBox() {
     upgradeState = 2
     upgradeBox.replaceChildren()
     upgradeBox.className = 'editState'
@@ -108,34 +110,34 @@ function renderEditBox(){
     editBoxLeft.addEventListener("dragover", (e) => {
         e.preventDefault();
     })
-    editBoxLeft.addEventListener("drop",(e)=>{
-        if(editBoxLeft.classList.contains('full')){
+    editBoxLeft.addEventListener("drop", (e) => {
+        if (editBoxLeft.classList.contains('full')) {
             return
         }
-        else{
+        else {
             e.preventDefault()
             e.target.classList.remove("dragging")
             dragged.parentNode.removeChild(dragged)
             e.target.appendChild(dragged)
             console.log(dragged)
-            editBoxLeft.classList.add('full') 
+            editBoxLeft.classList.add('full')
         }
 
     })
     editBoxRight.addEventListener("dragover", (e) => {
         e.preventDefault();
     })
-    editBoxRight.addEventListener("drop",(e)=>{
-        if(editBoxRight.classList.contains('full')){
+    editBoxRight.addEventListener("drop", (e) => {
+        if (editBoxRight.classList.contains('full')) {
             return
         }
-        else{
+        else {
             e.preventDefault()
             e.target.classList.remove("dragging")
             dragged.parentNode.removeChild(dragged)
             e.target.appendChild(dragged)
             console.log(dragged)
-            editBoxRight.classList.add('full') 
+            editBoxRight.classList.add('full')
         }
 
     })
@@ -145,34 +147,34 @@ function renderEditBox(){
     const editButton = document.createElement('button')
     editButton.innerHTML = '합성하기'
     editButton.id = 'editButton'
-    editButton.addEventListener('onclick',onClickEditButton)
+    editButton.addEventListener('onclick', onClickEditButton)
     upgradeBox.appendChild(editBoxLeft)
     upgradeBox.appendChild(plusDiv)
     upgradeBox.appendChild(editBoxRight)
     upgradeBox.appendChild(editButton)
 }
 
-function onClickEditButton(){
-    if(leftFull == 1 && rightFull == 1){
+function onClickEditButton() {
+    if (leftFull == 1 && rightFull == 1) {
         const editItem1 = document.getElementById('editBoxLeft')
         const editItem2 = document.getElementById('editBoxRight')
         const text = enforceItem.textContent
-        const itemLevel = text[text.length-1]
+        const itemLevel = text[text.length - 1]
         const itemName = text.slice(0, -1)
     }
-    else{
+    else {
         console.log('아이템부족')
     }
 }
 
-function onClickEditTabButton(){
+function onClickEditTabButton() {
 
     renderEditBox()
 }
 
 
-document.getElementById('editTabButton').addEventListener('click',onClickEditTabButton)
-document.getElementById('enforceTabButton').addEventListener('click',onClickEnforceTabButton)
+document.getElementById('editTabButton').addEventListener('click', onClickEditTabButton)
+document.getElementById('enforceTabButton').addEventListener('click', onClickEnforceTabButton)
 
 
-export {renderEnforceBox,onClickEnforceTabButton,renderEditBox,onClickEditTabButton}
+export { renderEnforceBox, onClickEnforceTabButton, renderEditBox, onClickEditTabButton }

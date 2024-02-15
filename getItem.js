@@ -1,9 +1,11 @@
 import englishWord from "./englishQuizObject.js"
 import {
-    renderItemINFO, onClickItem, renderInventoryBox, updateNormalRandomTicket, updateSpecialRandomTicket
-    , userNormalRandomTicket, userSpecialRandomTicket, updateInventoryINFO, updateUserMoney, userMoney
+    renderItemINFO, onClickItem, renderInventoryBox, updateNormalRandomTicket, updateSpecialRandomTicket,
+    userNormalRandomTicket, userSpecialRandomTicket, updateInventoryINFO, updateUserMoney, userMoney
 } from "./Inventory.js"
 import { knowledgeObject } from "./KnowledgeObject.js"
+import { checkColletion } from "./collection.js"
+
 export let dragged
 let inventoryBox = document.getElementById('inventory')
 let getItemBox = document.getElementById('getItem')
@@ -59,6 +61,9 @@ function renderMathQuiz() {
 function onClickmathAnswerButton(mathAnswerInput, mathAnswer) {
     return function () {
         if (mathAnswerInput.value == mathAnswer) {
+            let url = 'http://localhost:3000/quiz/math'
+            fetch(url)
+                .then()
             const mathItem = document.createElement('div')
             mathItem.innerHTML = '수학'
             mathItem.className = 'item'
@@ -66,7 +71,7 @@ function onClickmathAnswerButton(mathAnswerInput, mathAnswer) {
             mathItem.addEventListener("click", onClickItem(mathItem))
         }
         else
-            console.log('wrong')
+            alert('틀렸습니다')
     }
 }
 
@@ -119,38 +124,54 @@ function renderDrawBox() {
     nomalDrawButton.className = 'drawButton'
     specialDrawButton.className = 'drawButton'
     nomalDrawButton.addEventListener('click', function () {
-        const url = 'http://localhost:3000/user/normalTicketCheck'
+        const url = 'http://localhost:3000/user/normalTicketCheck/' + 'normal'
         fetch(url)
             .then((response) => {
                 if (!response.ok) {
                     return response.text().then(text => {
                         throw new Error(text)
                     })
-                    
+
                 }
 
                 return response.json()
             })
             .then(
                 (data) => {
-                    console.log()
-                    const item = makeItem(data[0][0],data[1])
+                    const item = makeItem(data[0][0], data[1])
                     inventoryBox.appendChild(item)
+                    updateInventoryINFO()
+                    checkColletion(data[0][0])
                 },
                 (error) => {
                     alert(error)
                 }
             )
-
     })
+
     specialDrawButton.addEventListener('click', function () {
-        if (userSpecialRandomTicket > 0) {
-            const randomNum = Math.floor(Math.random() * specialDrawList.length)
-            const item = makeItem(specialDrawList[randomNum], 1)
-            inventoryBox.appendChild(item)
-            updateSpecialRandomTicket(-1)
-            updateInventoryINFO()
-        }
+        const url = 'http://localhost:3000/user/normalTicketCheck/' + 'special'
+        fetch(url)
+            .then((response) => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text)
+                    })
+
+                }
+
+                return response.json()
+            })
+            .then(
+                (data) => {
+                    const item = makeItem(data[0][0], data[1])
+                    inventoryBox.appendChild(item)
+                    updateInventoryINFO()
+                },
+                (error) => {
+                    alert(error)
+                }
+            )
     })
     getItemBox.appendChild(nomalDrawButton)
     getItemBox.appendChild(specialDrawButton)
@@ -161,7 +182,7 @@ function onClickDrawButton() {
     renderDrawBox()
 }
 
-function makeItem(itemObject,inventoryId) {
+function makeItem(itemObject, inventoryId) {
     const item = document.createElement('div')
     item.className = 'item'
     item.innerHTML = itemObject.name + '<br>' + itemObject.level
@@ -192,32 +213,46 @@ function renderSellItemBox() {
 function onClickSellButton() {
     let sumSellItemCost = 0
     let sellItems = []
-    const sellItemList = sellBox.children;
+    const sellItemList = sellBox.childNodes
+
     for (let i = 0; i < sellItemList.length; i++) {
-        let url = 'http://localhost:3000/sellItem/' + sellItemList[i].dataset.inventoryId
-        const p = fetch(url)
-            .then(function (response) {
-                return response.json()
-            })
-            .then(function (data) {
-                return data[0]
-            })
-        sellItems.push(p)
-        console.log(sellItems)
+        sellItems.push(sellItemList[i].dataset.inventoryId)
     }
 
-    Promise.all(sellItems).then((values) => {
-        for (let i = 0; i < values.length; i++) {
-            sumSellItemCost = sumSellItemCost + values[i].price
+    let url = 'http://localhost:3000/sellItem/'
+    fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sellItems),
+    })
+    .then((response) => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text)
+            })
         }
-        console.log(values);
-        updateUserMoney(sumSellItemCost)
-        updateInventoryINFO()
-        updateSellCount(-values.length)
-        alert(`총판매금액 : ${sumSellItemCost}`)
-    });
-    renderSellItemBox()
-    changeGetItemButtonState(false)
+        return response.json()
+    })
+    .then(
+        (data) => {
+            console.log(data)
+            alert("판매 금액 : " + data.result)
+            updateSellCount(-sellItemList.length)
+            renderSellItemBox()
+            updateInventoryINFO()
+            changeGetItemButtonState(false)
+
+        },
+        (error) => {
+            alert(error)
+        }
+    )
+
+    // updateSellCount(-sellItemList.length)
+    // renderSellItemBox()
+    // updateInventoryINFO()
+    // changeGetItemButtonState(false)
+
 }
 
 function changeSellState(state) {
