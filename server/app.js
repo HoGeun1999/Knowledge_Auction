@@ -367,6 +367,37 @@ app.get('/collectionReward/3', function (req, res) {
   })
 });
 
+app.get('/collectionReward/4', function (req, res) {
+  connection.beginTransaction(async function (err) {
+    if (err) { throw err }
+    try {
+      const getHistoryCount = await executeQuery('SELECT count(getHistory) as count FROM collection where getHistory = 0 AND collectionId = 1')
+
+      if (getHistoryCount[0].count === 0) {
+        await executeQuery('UPDATE userData SET specialTicket = specialTicket + 2')
+        await executeQuery('UPDATE collection SET rewardClear = 1 WHERE collectionId = 4')
+        connection.commit((err) => {
+          if (err) {
+            return connection.rollback(() => { throw err; })
+          }
+          else {
+            res.send({ result: '도감 보상 : 고급티켓 2개' })
+          }
+        })
+      }
+      else {
+        return connection.rollback(() => {
+          res.status(403);
+          res.send('도감 부족')
+        })
+      }
+    }
+    catch (e) {
+      console.log("err:", e);
+    }
+  })
+});
+
 app.get('/quiz/math', function (req, res) {
   const uuid = uuidv4()
   connection.beginTransaction(async function (err) {

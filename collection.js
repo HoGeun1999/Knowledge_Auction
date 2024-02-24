@@ -149,4 +149,29 @@ function onclickCollectionReward3(button){
     )
 }
 
+function onclickCollectionReward4(button){
+    let url =  'http://localhost:3000/collectionReward/4'
+    fetch(url)
+    .then((response) => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text)
+            })
+
+        }
+        return response.json()
+    })
+    .then(
+        (data) => {
+            alert(data.result)
+            button.disabled = true 
+            updateInventoryINFO()
+
+        },
+        (error) => {
+            alert(error)
+        }
+    )
+}
+
 export {renderCollectionBox, checkColletion}
