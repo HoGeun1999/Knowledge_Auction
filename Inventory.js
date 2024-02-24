@@ -19,7 +19,12 @@ function setIsfull(state) {
     editButton.disabled = false;
 }
 
-
+function setLeftRightfull(state) {
+    leftFull = state
+    rightFull = state
+    enforceButton.disabled = false;
+    editButton.disabled = false;
+}
 
 function renderItemINFO(item, data) {
     return function () {
@@ -114,7 +119,7 @@ function onClickEditItem(data, item) {
     return () => {
         const inventory = document.getElementById('inventory')
         const editBox = item.parentNode;
-        const newItem = makeItem(data)
+        const newItem = makeItem(data,data.inventory_id)
         editBox.removeChild(item)
         editBox.innerHTML = '합성할 아이템을 선택하세요'
         inventory.appendChild(newItem)
@@ -194,7 +199,6 @@ function updateUserMoney(cost) {
 
 
 function updateInventoryINFO() {
-
     const url = 'http://localhost:3000/getUserData/'
     fetch(url)
     .then(function(response){
@@ -211,5 +215,5 @@ function updateInventoryINFO() {
 export {
     renderItemINFO, onClickItem, renderInventoryBox, setIsfull, isFull, userMoney, updateSpecialRandomTicket,
     updateNormalRandomTicket, userNormalRandomTicket, userSpecialRandomTicket, updateInventoryINFO, updateUserMoney,
-    leftFull, rightFull
+    leftFull, rightFull, setLeftRightfull
 }

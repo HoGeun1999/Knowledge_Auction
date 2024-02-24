@@ -64,6 +64,7 @@ const specialDrawList = ['','','화학','생물학','지구과학','물리학']
 /* 조합법
 -----레어-----
 없는건 다 온리 뽑기
+물리학 = ['수','과학]
 전산학 = ['정보기술','수학']
 국악학 = ['음악','국어']
 행정학 = ['사회','국어']
@@ -95,7 +96,7 @@ const specialDrawList = ['','','화학','생물학','지구과학','물리학']
 
 */
 
-/*도감
+/*도감  
 
 
 
@@ -109,6 +110,7 @@ export const collectionObject = [
         collectionLevel : [5,5,5,5,5],
         collectionBonus : 1,
         collectionClear : false
+        //보상 노말 강화확률 10퍼 상승
     },
     {
         collectionName : '예체능',
@@ -116,6 +118,7 @@ export const collectionObject = [
         collectionLevel : [1,1,1],
         collectionBonus : 1,
         collectionClear : false
+        //보상 5원
     },
     {
         collectionName : '과학박사',
@@ -123,9 +126,10 @@ export const collectionObject = [
         collectionLevel : [5,5,5,5],
         collectionBonus : 1,
         collectionClear : false
+        // 보상 스페셜 티켓 4장
     },
     // {
-    //     collectionName : '고등수학',
+    //     collectionName : '수학자',
     //     collectionList : ['통계학','기하학','대수학','해석학'],
     //     collectionLevel : [1,1,1],
     //     collectionBonus : 1,

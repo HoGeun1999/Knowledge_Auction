@@ -99,12 +99,54 @@ function onclickCollectionReward1(button){
    
 }
 
-function onclickCollectionReward2(){
-    console.log(1002)
+function onclickCollectionReward2(button){
+    let url =  'http://localhost:3000/collectionReward/2'
+    fetch(url)
+    .then((response) => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text)
+            })
+
+        }
+        return response.json()
+    })
+    .then(
+        (data) => {
+            alert(data.result)
+            button.disabled = true 
+            updateInventoryINFO()
+
+        },
+        (error) => {
+            alert(error)
+        }
+    )
 }
 
-function onclickCollectionReward3(){
-    console.log(1003)
+function onclickCollectionReward3(button){
+    let url =  'http://localhost:3000/collectionReward/3'
+    fetch(url)
+    .then((response) => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text)
+            })
+
+        }
+        return response.json()
+    })
+    .then(
+        (data) => {
+            alert(data.result)
+            button.disabled = true 
+            updateInventoryINFO()
+
+        },
+        (error) => {
+            alert(error)
+        }
+    )
 }
 
 export {renderCollectionBox, checkColletion}

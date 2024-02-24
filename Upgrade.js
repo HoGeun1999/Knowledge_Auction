@@ -1,7 +1,7 @@
 import { dragged, changeGetItemButtonState, makeItem } from "./getItem.js"
 import { enforceTable, enforceCostTable } from "./KnowledgeObject.js"
-import { setIsfull, userMoney, isFull, updateInventoryINFO, updateUserMoney, leftFull, rightFull } from "./Inventory.js"
-import {checkColletion} from "./collection.js"
+import { setIsfull, userMoney, isFull, updateInventoryINFO, updateUserMoney, leftFull, rightFull, setLeftRightfull } from "./Inventory.js"
+import { checkColletion } from "./collection.js"
 
 export let upgradeState = 1
 const inventory = document.getElementById('inventory')
@@ -9,6 +9,8 @@ const upgradeBox = document.getElementById('upgrade')
 
 function renderEnforceBox() {
     upgradeState = 1
+    const enforceWrap = document.createElement('div')
+    enforceWrap.id = 'enforceWrap'
     upgradeBox.replaceChildren()
     const enforceBox = document.createElement('div')
     upgradeBox.className = 'enforceState'
@@ -34,8 +36,10 @@ function renderEnforceBox() {
     enforceButton.id = 'enforceButton'
     enforceButton.innerText = '강화하기'
     enforceButton.addEventListener('click', onClickEnforceButton)
-    upgradeBox.appendChild(enforceBox)
-    upgradeBox.appendChild(enforceButton)
+    
+    enforceWrap.appendChild(enforceBox)
+    enforceWrap.appendChild(enforceButton)
+    upgradeBox.appendChild(enforceWrap)
 }
 
 function onClickEnforceTabButton() {
@@ -59,23 +63,23 @@ function onClickEnforceButton() {
         .then(
             (data) => {
                 updateInventoryINFO()
-                if(data.result === '강화 실패'){
+                if (data.result === '강화 실패') {
                     alert('강화 실패')
                     return
                 }
-                else if(data.result === '파괴'){
+                else if (data.result === '파괴') {
                     alert('아이템 파괴')
                     renderEnforceBox()
                     changeGetItemButtonState(false)
-                    setIsfull(0)  
+                    setIsfull(0)
                     return
                 }
-                else{
-                    const newItem = makeItem(data.result[0][0],data.result[1])   
+                else {
+                    const newItem = makeItem(data.result[0][0], data.result[1])
                     inventory.appendChild(newItem)
                     renderEnforceBox()
                     changeGetItemButtonState(false)
-                    setIsfull(0)  
+                    setIsfull(0)
                     checkColletion(data.result[0][0])
                 }
             },
@@ -98,6 +102,7 @@ function renderEditBox() {
     upgradeBox.replaceChildren()
     upgradeBox.className = 'editState'
     const editWrap = document.createElement('div')
+
     editWrap.id = 'editWrap'
     const editBoxLeft = document.createElement('div')
     const editBoxRight = document.createElement('div')
@@ -147,25 +152,60 @@ function renderEditBox() {
     const editButton = document.createElement('button')
     editButton.innerHTML = '합성하기'
     editButton.id = 'editButton'
-    editButton.addEventListener('onclick', onClickEditButton)
-    upgradeBox.appendChild(editBoxLeft)
-    upgradeBox.appendChild(plusDiv)
-    upgradeBox.appendChild(editBoxRight)
-    upgradeBox.appendChild(editButton)
+    editButton.addEventListener('click', onClickEditButton)
+    editWrap.appendChild(editBoxLeft)
+    editWrap.appendChild(plusDiv)
+    editWrap.appendChild(editBoxRight)
+    editWrap.appendChild(editButton)
+    upgradeBox.appendChild(editWrap)
 }
 
 function onClickEditButton() {
     if (leftFull == 1 && rightFull == 1) {
-        const editItem1 = document.getElementById('editBoxLeft')
-        const editItem2 = document.getElementById('editBoxRight')
-        const text = enforceItem.textContent
-        const itemLevel = text[text.length - 1]
-        const itemName = text.slice(0, -1)
+        const editLeftBox = document.getElementById('editBoxLeft')
+        const editRightBox = document.getElementById('editBoxRight')
+        const leftItem = editLeftBox.children[0]
+        const rightItem = editRightBox.children[0]
+        let url = 'http://localhost:3000/edit/'
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+                {
+                    leftItemId: leftItem.dataset.inventoryId,
+                    rightItemId: rightItem.dataset.inventoryId
+                }),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text)
+                    })
+                }
+                return response.json()
+            })
+            .then(
+                (data) => {
+                    const newItem = makeItem(data[0],data[0].inventory_id)
+                    inventory.appendChild(newItem)
+                    renderEditBox()
+                    changeGetItemButtonState(false)
+                    checkColletion(data[0])
+                    setLeftRightfull(0)
+                },
+                (error) => {
+                    alert(error)
+                }
+            )
     }
-    else {
-        console.log('아이템부족')
+
+
+
+    else { 
+        alert('아이템부족')
     }
 }
+
 
 function onClickEditTabButton() {
 

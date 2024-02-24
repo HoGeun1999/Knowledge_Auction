@@ -84,74 +84,69 @@ app.post("/items/random", function (req, res) {
 
 app.get('/items/enforce/:inventoryID', function (req, res) {
   let { inventoryID } = req.params;
-  // connection.beginTransaction(function (err) {
-  //   if(err) {throw err}
-  connection.query(`SELECT i.id as inventory_id, k.* FROM inventory i INNER JOIN knowledge k ON i.itemId = k.id where i.id = '${inventoryID}'`, (err, rows) => {
-    if (err) { throw err }
-    connection.query(`SELECT probability, price FROM enforce where rarity = '${rows[0].rarity}' && level = '${rows[0].level}'`, (err, enforceData) => {
+  try {
+    connection.beginTransaction(async function (err) {
       if (err) { throw err }
-      connection.query(`SELECT holdings FROM userData where id = ${userID}`, (err, userMoney) => {
-        if (err) { throw err }
-        if (userMoney[0].holdings > 0) {
-          connection.query(`UPDATE userData SET holdings = ${userMoney[0].holdings - enforceData[0].price} where id = ${userID}`, (err, updataUserMoney) => {
-            if (err) { throw err }
-            console.log(userMoney[0].holdings)
-            console.log(enforceData)
-            const randomNum = Math.floor(Math.random() * 10 + 1);
-            if (randomNum === 10) {
-              connection.query(`DELETE FROM inventory where id = '${inventoryID}'`, (err, result1) => {
-                if (err) { throw err }
-                connection.commit((err) => {
-                  if (err) {
-                    return connection.rollback(() => { throw err; })
-                  }
-                  else {
-                    res.send({ result: '파괴' })
-                  }
-                })
-              })
-            }
-            else if (randomNum <= enforceData[0].probability) {
-              connection.query(`SELECT * FROM knowledge where name = '${rows[0].name}' && level = ${rows[0].level + 1}`, (err, enforceItemId) => {
-                console.log(enforceItemId)
-                if (err) { throw err }
-                connection.query(`UPDATE inventory SET itemId = '${enforceItemId[0].id}' where id = '${inventoryID}'`, (err, result2) => {
-                  if (err) { throw err }
-                  connection.commit((err) => {
-                    if (err) {
-                      return connection.rollback(() => { throw err; })
-                    }
-                    else {
-                      console.log(enforceItemId)
-                      res.send({ result: [enforceItemId, rows[0].inventory_id] })
-                    }
-                  })
-                })
-              })
+      const rows = await executeQuery(`SELECT i.id as inventory_id, k.* FROM inventory i INNER JOIN knowledge k ON i.itemId = k.id where i.id = '${inventoryID}'`)
+      const enforceData = await executeQuery(`SELECT probability, price FROM enforce where rarity = '${rows[0].rarity}' && level = '${rows[0].level}'`)
+      const userMoney = await executeQuery(`SELECT holdings FROM userData where id = ${userID}`)
+
+      if (userMoney[0].holdings > 0) {
+        await executeQuery(`UPDATE userData SET holdings = ${userMoney[0].holdings - enforceData[0].price} where id = ${userID}`)
+        const randomNum = Math.floor(Math.random() * 10 + 1);
+
+        if (randomNum === 10) {
+          await executeQuery(`DELETE FROM inventory where id = '${inventoryID}'`)
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => { throw err; })
             }
             else {
-              connection.commit((err) => {
-                if (err) {
-                  return connection.rollback(() => { throw err; })
-                }
-                else {
-                  res.send({ result: '강화 실패' })
-                }
-              })
+              res.send({ result: '파괴' })
             }
           })
         }
-        else {
-          console.log(1000)
-          return connection.rollback(() => {
-            res.status(403);
-            res.send('no money')
-          })
 
+        else if (randomNum <= enforceData[0].probability) {
+          const enforceItemId = await executeQuery(`SELECT * FROM knowledge where name = '${rows[0].name}' && level = ${rows[0].level + 1}`)
+          await executeQuery(`UPDATE inventory SET itemId = '${enforceItemId[0].id}' where id = '${inventoryID}'`)
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => { throw err; })
+            }
+            else {
+              res.send({ result: [enforceItemId, rows[0].inventory_id] })
+            }
+          })
         }
-      })
+
+        else {
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => { throw err; })
+            }
+            else {
+              res.send({ result: '강화 실패' })
+            }
+          })
+        }
+      }
+
+      else {
+        console.log(1000)
+        return connection.rollback(() => {
+          res.status(403);
+          res.send('no money')
+        })
+
+      }
     })
-  })
+
+  }
+  catch (e) {
+    console.log("err:", e);
+  }
+
 })
 // });
 
@@ -197,8 +192,8 @@ app.post('/sellItem/', function (req, res) {
             res.send('에러')
           })
         }
-        else{
-          res.send({result : sellMoney})
+        else {
+          res.send({ result: sellMoney })
         }
       })
     }
@@ -207,6 +202,49 @@ app.post('/sellItem/', function (req, res) {
     }
   })
 });
+
+app.post('/edit', function (req, res) {
+  const uuid = uuidv4();
+  const leftItemId = req.body.leftItemId
+  const rightItemId = req.body.rightItemId
+  connection.beginTransaction(async function (err) {
+    if (err) { throw err }
+    try {
+      const leftItemName = await executeQuery(`SELECT name FROM knowledge WHERE id = (SELECT itemId FROM inventory WHERE id = '${leftItemId}')`)
+      const rightItemName = await executeQuery(`SELECT name FROM knowledge WHERE id = (SELECT itemId FROM inventory WHERE id = '${rightItemId}')`)
+      const editItem = await executeQuery(`SELECT * FROM editRecipe WHERE (item1 = '${leftItemName[0].name}' AND item2 = '${rightItemName[0].name}') OR (item1 = '${rightItemName[0].name}' AND item2 = '${leftItemName[0].name}')`)
+      if (editItem.length == 0) {
+        return connection.rollback(() => {
+          res.status(403);
+          res.send('합성 실패')
+        })
+      }
+      else {
+        const KnowledgeItemId = await executeQuery(`SELECT id FROM knowledge WHERE level = 1 AND name = '${editItem[0].result}'`)
+        await executeQuery(`INSERT INTO inventory VALUES ('${uuid}','${KnowledgeItemId[0].id}')`)
+        const result = await executeQuery(`SELECT i.id as inventory_id, k.* FROM inventory i INNER JOIN knowledge k ON i.itemId = k.id WHERE i.id = '${uuid}'`)
+        await executeQuery(`DELETE FROM inventory WHERE id = '${leftItemId}'`)
+        await executeQuery(`DELETE FROM inventory WHERE id = '${rightItemId}'`)
+        connection.commit((err) => {
+          if (err) {
+            return connection.rollback(() => {
+              res.status(403);
+              res.send('에러')
+            })
+          }
+          else {
+            res.send(result)
+          }
+        })
+      }
+    }
+    catch (e) {
+      console.log("err:", e)
+    }
+  })
+
+
+})
 
 
 app.get('/delItem/:inventoryID', function (req, res) {
@@ -236,7 +274,7 @@ app.get('/collectionReward/1', function (req, res) {
     if (err) { throw err }
     try {
       const getHistoryCount = await executeQuery('SELECT count(getHistory) as count FROM collection where getHistory = 0 AND collectionId = 1')
-      
+
       if (getHistoryCount[0].count === 0) {
         await executeQuery('UPDATE userData SET holdings = holdings + 5')
         await executeQuery('UPDATE collection SET rewardClear = 1 WHERE collectionId = 1')
@@ -244,8 +282,8 @@ app.get('/collectionReward/1', function (req, res) {
           if (err) {
             return connection.rollback(() => { throw err; })
           }
-          else{
-            res.send({result : '도감 보상 : 5원'})
+          else {
+            res.send({ result: '도감 보상 : 5원' })
           }
         })
       }
@@ -262,13 +300,120 @@ app.get('/collectionReward/1', function (req, res) {
   })
 });
 
-// app.get('/collectionReward/1', function (req, res) {
-//   connection.query('UPDATE userData SET holdings = holdings + 5', (error, rows, fields) => {
-//     if (error) throw error;
-//   });
-// });
+app.get('/collectionReward/2', function (req, res) {
+  connection.beginTransaction(async function (err) {
+    if (err) { throw err }
+    try {
+      const getHistoryCount = await executeQuery('SELECT count(getHistory) as count FROM collection where getHistory = 0 AND collectionId = 1')
+
+      if (getHistoryCount[0].count === 0) {
+        const enfroceData = await executeQuery(`SELECT * FROM enforce WHERE rarity = 'normal'`)
+        for (let i = 0; i < enfroceData.length; i++) {
+          await executeQuery(`UPDATE enforce SET probability = probability + 1 WHERE rarity = 'normal' AND level = ${i + 1}`)
+        }
+
+        await executeQuery('UPDATE collection SET rewardClear = 1 WHERE collectionId = 2')
+        connection.commit((err) => {
+          if (err) {
+            return connection.rollback(() => { throw err; })
+          }
+          else {
+            res.send({ result: '도감 보상 : 노말아이템 강화확률 10퍼 증가' })
+          }
+        })
+      }
+      else {
+        return connection.rollback(() => {
+          res.status(403);
+          res.send('도감 부족')
+        })
+      }
+    }
+    catch (e) {
+      console.log("err:", e);
+    }
+  })
+});
 
 
+app.get('/collectionReward/3', function (req, res) {
+  connection.beginTransaction(async function (err) {
+    if (err) { throw err }
+    try {
+      const getHistoryCount = await executeQuery('SELECT count(getHistory) as count FROM collection where getHistory = 0 AND collectionId = 1')
+
+      if (getHistoryCount[0].count === 0) {
+        await executeQuery('UPDATE userData SET normalTicket = normalTicket + 3')
+        await executeQuery('UPDATE collection SET rewardClear = 1 WHERE collectionId = 3')
+        connection.commit((err) => {
+          if (err) {
+            return connection.rollback(() => { throw err; })
+          }
+          else {
+            res.send({ result: '도감 보상 : 일반티켓 3개' })
+          }
+        })
+      }
+      else {
+        return connection.rollback(() => {
+          res.status(403);
+          res.send('도감 부족')
+        })
+      }
+    }
+    catch (e) {
+      console.log("err:", e);
+    }
+  })
+});
+
+app.get('/quiz/math', function (req, res) {
+  const uuid = uuidv4()
+  connection.beginTransaction(async function (err) {
+    if (err) { throw err }
+    try {
+      const mathId = await executeQuery(`SELECT id FROM knowledge WHERE name = '수학' AND level = 1 `)
+      await executeQuery(`INSERT INTO inventory (id,itemId) VALUES ('${uuid}','${mathId[0].id}')`)
+      const data = await executeQuery(`SELECT i.id as inventory_id, k.* FROM inventory i INNER JOIN knowledge k ON i.itemId = k.id WHERE i.id = '${uuid}';`)
+      connection.commit((err) => {
+        if (err) {
+          return connection.rollback(() => { throw err; })
+        }
+        else {
+          res.send(data)
+        }
+      })
+    }
+
+    catch (e) {
+      console.log("err:", e);
+    }
+  })
+})
+
+app.get('/quiz/english', function (req, res) {
+  const uuid = uuidv4()
+  connection.beginTransaction(async function (err) {
+    if (err) { throw err }
+    try {
+      const mathId = await executeQuery(`SELECT id FROM knowledge WHERE name = '영어' AND level = 1 `)
+      await executeQuery(`INSERT INTO inventory (id,itemId) VALUES ('${uuid}','${mathId[0].id}')`)
+      const data = await executeQuery(`SELECT i.id as inventory_id, k.* FROM inventory i INNER JOIN knowledge k ON i.itemId = k.id WHERE i.id = '${uuid}';`)
+      connection.commit((err) => {
+        if (err) {
+          return connection.rollback(() => { throw err; })
+        }
+        else {
+          res.send(data)
+        }
+      })
+    }
+
+    catch (e) {
+      console.log("err:", e);
+    }
+  })
+})
 
 app.get('/collectionList/', function (req, res) {
   connection.query('SELECT * FROM collection order by collectionName;', (error, rows, fields) => {
@@ -281,6 +426,7 @@ app.post('/collectionCheck/', function (req, res) {
   const itemData = req.body;
   connection.query(`UPDATE collection SET getHistory = 1 WHERE name = '${itemData.name}' AND level = ${itemData.level}`, (error, rows, fields) => {
     if (error) throw error;
+    res.send('ok')
   });
 });
 
@@ -299,7 +445,8 @@ function executeQuery(query) {
   });
 }
 
-app.get('/user/normalTicketCheck/:ticketType', function (req, res) {
+app.get('/user/randomDraw/:ticketType', function (req, res) {
+  console.log('server check')
   const uuid = uuidv4();
   let { ticketType } = req.params;
   let ticket = ticketType + 'Ticket'
@@ -309,17 +456,31 @@ app.get('/user/normalTicketCheck/:ticketType', function (req, res) {
   }
   else {
     // const arr = ['Rare','Epic']
-    const arr = ['Rare']
+    const arr = ['Rare', 'Epic']
     rarity = arr[Math.floor(Math.random() * arr.length)]
   }
   console.log(rarity)
   connection.beginTransaction(async function (err) {
     if (err) { throw err }
     try {
+      const userMoney = await executeQuery('SELECT holdings FROM userData WHERE id = 1')
       const rows = await executeQuery(`SELECT ${ticket} FROM userData`);
       console.log(rows)
       if (rows[0][ticket] > 0) {
         await executeQuery(`UPDATE userData SET ${ticket} = ${rows[0][ticket] - 1} where id = ${userID}`);
+        const randomItem = await executeQuery(`SELECT * FROM knowledge k WHERE rarity = '${rarity}' && level = 1 ORDER BY RAND() LIMIT 1`)
+        await executeQuery(`INSERT INTO inventory (id, itemId) VALUES ('${uuid}', '${randomItem[0].id}')`)
+        connection.commit((err) => {
+          if (err) {
+            return connection.rollback(() => { throw err; })
+          }
+          else {
+            res.send([randomItem, uuid])
+          }
+        })
+      }
+      else if (userMoney[0].holdings >= 3 && ticketType == 'normal') {
+        await executeQuery(`UPDATE userData SET holdings = holdings -3 WHERE id = ${userID}`)
         const randomItem = await executeQuery(`SELECT * FROM knowledge k WHERE rarity = '${rarity}' && level = 1 ORDER BY RAND() LIMIT 1`)
         console.log(randomItem)
         await executeQuery(`INSERT INTO inventory (id, itemId) VALUES ('${uuid}', '${randomItem[0].id}')`)
@@ -331,7 +492,22 @@ app.get('/user/normalTicketCheck/:ticketType', function (req, res) {
             res.send([randomItem, uuid])
           }
         })
-      } else {
+      }
+      else if (userMoney[0].holdings >= 15 && ticketType != 'normal') {
+        await executeQuery(`UPDATE userData SET holdings = holdings -15 WHERE id = ${userID}`)
+        const randomItem = await executeQuery(`SELECT * FROM knowledge k WHERE rarity = '${rarity}' && level = 1 ORDER BY RAND() LIMIT 1`)
+        console.log(randomItem)
+        await executeQuery(`INSERT INTO inventory (id, itemId) VALUES ('${uuid}', '${randomItem[0].id}')`)
+        connection.commit((err) => {
+          if (err) {
+            return connection.rollback(() => { throw err; })
+          }
+          else {
+            res.send([randomItem, uuid])
+          }
+        })
+      }
+      else {
         return connection.rollback(() => {
           res.status(403);
           res.send('no Ticket')
