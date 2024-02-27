@@ -1,40 +1,20 @@
-import { dragged, changeGetItemButtonState, makeItem } from "./getItem.js"
-import { enforceTable, enforceCostTable } from "./KnowledgeObject.js"
-import { setIsfull, userMoney, isFull, updateInventoryINFO, updateUserMoney, leftFull, rightFull, setLeftRightfull } from "./Inventory.js"
-import { checkColletion } from "./collection.js"
+import { changeTabButton, makeItemDiv } from "./getItem.js"
+import { setIsfull, updateInventoryINFO, leftFull, rightFull, setLeftRightfull } from "./Inventory.js"
+import { collectionCheck } from "./collection.js"
 
-export let upgradeState = 1
 const inventory = document.getElementById('inventory')
 const upgradeBox = document.getElementById('upgrade')
 
 function renderEnforceBox() {
-    upgradeState = 1
+    upgradeBox.replaceChildren()
     const enforceWrap = document.createElement('div')
     enforceWrap.id = 'enforceWrap'
-    upgradeBox.replaceChildren()
     const enforceBox = document.createElement('div')
-    upgradeBox.className = 'enforceState'
     enforceBox.id = 'enforceBox'
     enforceBox.textContent = '강화할 아이템을 선택하세요'
-    enforceBox.addEventListener("dragover", (e) => {
-        e.preventDefault();
-    })
-    enforceBox.addEventListener("drop", (e) => {
-        if (enforceBox.classList.contains('full')) {
-            return
-        }
-        else {
-            e.preventDefault()
-            console.log(dragged.parentNode)
-            dragged.parentNode.removeChild(dragged)
-            e.target.appendChild(dragged)
-            enforceBox.classList.add('full')
-        }
-
-    })
     const enforceButton = document.createElement('button')
     enforceButton.id = 'enforceButton'
-    enforceButton.innerText = '강화하기'
+    enforceButton.textContent = '강화하기'
     enforceButton.addEventListener('click', onClickEnforceButton)
     
     enforceWrap.appendChild(enforceBox)
@@ -70,17 +50,17 @@ function onClickEnforceButton() {
                 else if (data.result === '파괴') {
                     alert('아이템 파괴')
                     renderEnforceBox()
-                    changeGetItemButtonState(false)
+                    changeTabButton(false)
                     setIsfull(0)
                     return
                 }
                 else {
-                    const newItem = makeItem(data.result[0][0], data.result[1])
+                    const newItem = makeItemDiv(data.result[0][0], data.result[1])
                     inventory.appendChild(newItem)
                     renderEnforceBox()
-                    changeGetItemButtonState(false)
+                    changeTabButton(false)
                     setIsfull(0)
-                    checkColletion(data.result[0][0])
+                    collectionCheck(data.result[0][0])
                 }
             },
             (error) => {
@@ -90,15 +70,10 @@ function onClickEnforceButton() {
 
 }
 
-function delInventoryItem(inventoryId) {
-    console.log(inventoryId)
-    let url = 'http://localhost:3000/delItem/' + inventoryId
-    fetch(url)
-}
+
 
 
 function renderEditBox() {
-    upgradeState = 2
     upgradeBox.replaceChildren()
     upgradeBox.className = 'editState'
     const editWrap = document.createElement('div')
@@ -186,11 +161,11 @@ function onClickEditButton() {
             })
             .then(
                 (data) => {
-                    const newItem = makeItem(data[0],data[0].inventory_id)
+                    const newItem = makeItemDiv(data[0],data[0].inventory_id)
                     inventory.appendChild(newItem)
                     renderEditBox()
-                    changeGetItemButtonState(false)
-                    checkColletion(data[0])
+                    changeTabButton(false)
+                    collectionCheck(data[0])
                     setLeftRightfull(0)
                 },
                 (error) => {

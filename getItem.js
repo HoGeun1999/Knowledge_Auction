@@ -1,162 +1,152 @@
 import englishWord from "./englishQuizObject.js"
-import {
-    renderItemINFO, onClickItem, renderInventoryBox, updateNormalRandomTicket, updateSpecialRandomTicket,
-    userNormalRandomTicket, userSpecialRandomTicket, updateInventoryINFO, updateUserMoney, userMoney
-} from "./Inventory.js"
-import { checkColletion } from "./collection.js"
+import { renderItemINFO, onClickItem, updateInventoryINFO } from "./Inventory.js"
+import { collectionCheck } from "./collection.js"
+import { fetchGetMathItemData, fetchGetEnglishItemData, fetchGetDrawItemData, fetchSellItems } from "./api.js"
 
-export let dragged
-let inventoryBox = document.getElementById('inventory')
-let getItemBox = document.getElementById('getItem')
+const inventoryBox = document.getElementById('inventory')
+const getItemBox = document.getElementById('getItem')
+const enforceButton = document.getElementById('enforceTabButton')
+const editButton = document.getElementById('editTabButton')
+const quizButton = document.getElementById('quizTabButton')
+const drawButton = document.getElementById('drawTabButton')
+const sellButton = document.getElementById('sellTabButton')
 let sellState = false
 let sellItemCount = 0
-const quizButton = document.getElementById('quiz')
-const drawButton = document.getElementById('draw')
-const sellButton = document.getElementById('sell')
 
 function renderQuizBox() {
     getItemBox.replaceChildren()
     const mathQuizButton = document.createElement('button')
-    mathQuizButton.type = 'button'
-    mathQuizButton.innerHTML = '수학'
+    mathQuizButton.textContent = '수학'
     mathQuizButton.className = 'quizButton'
-    mathQuizButton.id = 'mathQuizButton'
-    mathQuizButton.addEventListener("click", onClickMathButton)
+    mathQuizButton.addEventListener("click", onClickMathQuizButton) // 이렇게 할필요가 있나? 30줄 함수 단 한줄
     getItemBox.appendChild(mathQuizButton)
-
+    //요런곳에 한줄 띄워주는건 취향차이인가?
     const englishQuizButton = document.createElement('button')
-    englishQuizButton.type = 'button'
-    englishQuizButton.innerHTML = '영어'
+    englishQuizButton.textContent = '영어'
     englishQuizButton.className = 'quizButton'
-    englishQuizButton.id = 'englishQuizButton'
-    englishQuizButton.addEventListener("click", onClickEnglishButton)
+    englishQuizButton.addEventListener("click", onClickEnglishQuizButton)
     getItemBox.appendChild(englishQuizButton)
 }
 
-function onClickMathButton() {
+function onClickMathQuizButton() {
     renderMathQuiz()
 }
-
-function renderMathQuiz() {
-    const mathQuizWrap = document.createElement('div')
-    mathQuizWrap.className = 'quizWrap'
+// 퀴즈를 다양하게 + 안정성을 높이려면 결국 퀴즈도 db에 저장하거나 서버에서 만들어야하나?
+// ex) 토익 - 매일 토익 풀기
+async function renderMathQuiz() {
     getItemBox.replaceChildren()
+    const mathQuizWrap = document.createElement('div')
+    mathQuizWrap.id = 'mathQuizWrap'
     const mathQuiz = document.createElement('div')
-    const randomNum1 = Math.floor(Math.random() * 10 + 1);
-    const randomNum2 = Math.floor(Math.random() * 10 + 1);
+    const randomNum1 = Math.floor(Math.random() * 10 + 1)
+    const randomNum2 = Math.floor(Math.random() * 10 + 1)
     const mathAnswer = randomNum1 * randomNum2
-    mathQuiz.innerHTML = randomNum1 + '*' + randomNum2 + '='
+    mathQuiz.textContent = randomNum1 + ' x ' + randomNum2 + ' = '
     const mathAnswerInput = document.createElement('input')
-    mathAnswerInput.type = 'text'
+    mathAnswerInput.id = 'mathAnswerInput'
     const answerCheckButton = document.createElement('button')
-    answerCheckButton.innerHTML = '입력'
-    answerCheckButton.addEventListener('click', onClickmathAnswerButton(mathAnswerInput, mathAnswer))
+    answerCheckButton.textContent = '입력'
+    answerCheckButton.addEventListener('click', async function onClickmathAnswerButton() {
+        if (mathAnswerInput.value == mathAnswer) { // mathAnswerInput.value가 int형이 아닌듯해서 근대 int형으로 바꾸고 ===쓸려해도 사용자가 str을 입력하면 int로 바꾸는데 문제고 또 if문써야하니까 그냥 ==이 좋지 않나?
+            const mathItemData = await fetchGetMathItemData()
+            const mathItem = makeItemDiv(mathItemData[0], mathItemData[0].inventory_id)
+            inventoryBox.appendChild(mathItem)
+            renderMathQuiz()
+            collectionCheck(mathItemData[0])
+            alert('정답! 아이템을 얻었습니다')
+        }
+        else {
+            alert('틀렸습니다.')
+        }
+    })
     mathQuizWrap.appendChild(mathQuiz)
     mathQuizWrap.appendChild(mathAnswerInput)
     mathQuizWrap.appendChild(answerCheckButton)
     getItemBox.appendChild(mathQuizWrap)
 }
 
-function onClickmathAnswerButton(mathAnswerInput, mathAnswer) {
-    return function () {
-        console.log(mathAnswerInput, mathAnswer)
-        if (mathAnswerInput.value == mathAnswer) {
-            let url = 'http://localhost:3000/quiz/math'
-            fetch(url)
-                .then((response) => {
-                    return response.json()
-                })
-                .then((data) => {
-                    const mathItem = makeItem(data[0], data[0].inventory_id)
-                    inventoryBox.appendChild(mathItem)
-                    renderMathQuiz()
-                    alert('정답! 아이템을 얻었습니다')
-                })
-
-        }
-        else
-            alert('틀렸습니다')
+function shuffleArray(array) {
+    for (let index = array.length - 1; index > 0; index--) {
+        const randomPosition = Math.floor(Math.random() * (index + 1))
+        const temporary = array[index]
+        array[index] = array[randomPosition]
+        array[randomPosition] = temporary
     }
 }
 
-
-
 function renderEnglishQuiz() {
     getItemBox.replaceChildren()
-    const englishQuizWrap =document.createElement('div')
-    englishQuizWrap.id = 'enQuizWrap'
-    const randomNumAnswer = Math.floor(Math.random() * englishWord.length);
-    const randomNumArr = [randomNumAnswer]
+    // 문제 만들기
+    const englishQuizWrap = document.createElement('div')
+    englishQuizWrap.id = 'englishQuizWrap'
+    const allDivWrap = document.createElement('div')
+    allDivWrap.id = 'allDivWrap'
     const englishQuiz = document.createElement('div')
-    englishQuiz.innerHTML = '다음 단어의 뜻을보고 답을 고르시오' + '<br>' + englishWord[randomNumAnswer][0]
+    const randomProblemAnswerIndex = Math.floor(Math.random() * englishWord.length)  // 이름 짓기가 어려운데 형같으면 이런건 뭐라 했을지?
+    const randomProblemAnswer = englishWord[randomProblemAnswerIndex]
+    const randomOptionIndexArray = [randomProblemAnswerIndex] // 마지막에 arr or array까지 붙여주는게 좋나?
+    englishQuiz.innerHTML = '다음 영단어를 보고 올바른 뜻을 고르시오' + '<br>' + randomProblemAnswer[0] + '<br>'
     while (true) {
-        const randomNum = Math.floor(Math.random() * englishWord.length);
-        if (randomNumArr.includes(randomNum) == false) {
-            randomNumArr.push(randomNum)
+        const randomOptionIndex = Math.floor(Math.random() * englishWord.length)
+        if (!randomOptionIndexArray.includes(randomOptionIndex)) {
+            randomOptionIndexArray.push(randomOptionIndex)
         }
-        if (randomNumArr.length == 3) {
+        if (randomOptionIndexArray.length === 3) {
             break
         }
     }
-    console.log(randomNumArr)
+    //선택한 문제 답, 선택지 순서 섞기
+    shuffleArray(randomOptionIndexArray)
+    // 선택지들 radio 형태로 만들어서 넣기
+    const allOptionWarp = document.createElement('div')
+    allOptionWarp.id = 'allOptionWarp'
+    const englishQuizOptionWrap1 = document.createElement('div')
+    englishQuizOptionWrap1.className = 'englishQuizOptionWrap'
+    const englishQuizOption1 = document.createElement('input')
+    englishQuizOption1.type = 'radio'
+    englishQuizOption1.value = `${englishWord[randomOptionIndexArray[0]][1]}`
+    englishQuizOption1.name = 'Option'
+    const englishQuizOptionLabel1 = document.createElement('label')
+    englishQuizOptionLabel1.textContent = `${englishWord[randomOptionIndexArray[0]][1]}`
+    englishQuizOptionWrap1.appendChild(englishQuizOption1)
+    englishQuizOptionWrap1.appendChild(englishQuizOptionLabel1)
 
-    const englishAnswerWrap1 = document.createElement('div')
-    englishAnswerWrap1.id = 'quizWrap'
-    const englishAnswer1 = document.createElement('input')
-    englishAnswer1.type = 'radio'
-    englishAnswer1.className = 'enQuizRadio'
-    englishAnswer1.value = `${englishWord[randomNumArr[0]][1]}`
-    englishAnswer1.name = 'answer'
-    const label1 = document.createElement('label')
-    label1.innerHTML = `${englishWord[randomNumArr[0]][1]}`
-    englishAnswerWrap1.appendChild(englishAnswer1)
-    englishAnswerWrap1.appendChild(label1)
+    const englishQuizOptionWrap2 = document.createElement('div')
+    englishQuizOptionWrap2.className = 'englishQuizOptionWrap'
+    const englishQuizOption2 = document.createElement('input')
+    englishQuizOption2.type = 'radio'
+    englishQuizOption2.value = `${englishWord[randomOptionIndexArray[1]][1]}`
+    englishQuizOption2.name = 'Option'
+    const englishQuizOptionLabel2 = document.createElement('label')
+    englishQuizOptionLabel2.textContent = `${englishWord[randomOptionIndexArray[1]][1]}`
+    englishQuizOptionWrap2.appendChild(englishQuizOption2)
+    englishQuizOptionWrap2.appendChild(englishQuizOptionLabel2)
 
-    const englishAnswerWrap2 = document.createElement('div')
-    const englishAnswer2 = document.createElement('input')
-    englishAnswer2.type = 'radio'
-    englishAnswer2.className = 'enQuizRadio'
-    englishAnswer2.value = `${englishWord[randomNumArr[1]][1]}`
-    englishAnswer2.name = 'answer'
-    const label2 = document.createElement('label')
-    label2.htmlFor = 'englishAnswer2'
-    label2.innerHTML = `${englishWord[randomNumArr[1]][1]}`
-    englishAnswerWrap2.appendChild(englishAnswer2)
-    englishAnswerWrap2.appendChild(label2)
-
-    const englishAnswerWrap3 = document.createElement('div')
-    const englishAnswer3 = document.createElement('input')
-    englishAnswer3.type = 'radio'
-    englishAnswer3.className = 'enQuizRadio'
-    englishAnswer3.value = 'englishAnswer3'
-    englishAnswer3.name = 'answer'
-    const label3 = document.createElement('label')
-    label3.htmlFor = `${englishWord[randomNumArr[2]][1]}`
-    label3.innerHTML = `${englishWord[randomNumArr[2]][1]}`
-    englishAnswerWrap3.appendChild(englishAnswer3)
-    englishAnswerWrap3.appendChild(label3)
-
+    const englishQuizOptionWrap3 = document.createElement('div')
+    englishQuizOptionWrap3.className = 'englishQuizOptionWrap'
+    const englishQuizOption3 = document.createElement('input')
+    englishQuizOption3.type = 'radio'
+    englishQuizOption3.value = `${englishWord[randomOptionIndexArray[2]][1]}`
+    englishQuizOption3.name = 'Option'
+    const englishQuizOptionlabel3 = document.createElement('label')
+    englishQuizOptionlabel3.textContent = `${englishWord[randomOptionIndexArray[2]][1]}`
+    englishQuizOptionWrap3.appendChild(englishQuizOption3)
+    englishQuizOptionWrap3.appendChild(englishQuizOptionlabel3)
+    //정답버튼 눌렀을때 동작
     const answerCheckButton = document.createElement('button')
-    answerCheckButton.innerHTML = '정답확인'
-    answerCheckButton.addEventListener('click', function () {
-        const radioButton = document.getElementsByName("answer");
-
-        for (let i = 0; i < radioButton.length; i++) {
-            let isSelected = radioButton[i].matches(":checked")
-
+    answerCheckButton.textContent = '정답확인'
+    answerCheckButton.addEventListener('click', async function () {
+        const optionButton = document.getElementsByName("Option")
+        for (let i = 0; i < optionButton.length; i++) {
+            let isSelected = optionButton[i].matches(":checked")
             if (isSelected) {
-                if (radioButton[i].value == englishWord[randomNumAnswer][1]) {
-                    let url = 'http://localhost:3000/quiz/english'
-                    fetch(url)
-                        .then((response) => {
-                            return response.json()
-                        })
-                        .then((data) => {
-                            const mathItem = makeItem(data[0], data[0].inventory_id)
-                            inventoryBox.appendChild(mathItem)
-                            renderEnglishQuiz()
-                            alert('정답! 아이템을 얻었습니다')
-                        })
+                if (optionButton[i].value == englishWord[randomProblemAnswerIndex][1]) {
+                    const englishItemData = await fetchGetEnglishItemData()
+                    const englishItem = makeItemDiv(englishItemData[0], englishItemData[0].inventory_id)
+                    inventoryBox.appendChild(englishItem)
+                    renderEnglishQuiz()
+                    collectionCheck(englishItemData[0])
+                    alert('정답! 아이템을 얻었습니다')
                 }
                 else {
                     alert('오답')
@@ -164,105 +154,61 @@ function renderEnglishQuiz() {
             }
         }
     })
-    englishQuizWrap.appendChild(englishQuiz)
-    englishQuizWrap.appendChild(englishAnswerWrap1)
-    englishQuizWrap.appendChild(englishAnswerWrap2)
-    englishQuizWrap.appendChild(englishAnswerWrap3)
-    englishQuizWrap.appendChild(answerCheckButton)
+
+    allOptionWarp.appendChild(englishQuizOptionWrap1)
+    allOptionWarp.appendChild(englishQuizOptionWrap2)
+    allOptionWarp.appendChild(englishQuizOptionWrap3)
+    allDivWrap.appendChild(englishQuiz)
+    allDivWrap.appendChild(allOptionWarp)
+    allDivWrap.appendChild(answerCheckButton)
+    englishQuizWrap.appendChild(allDivWrap)
     getItemBox.appendChild(englishQuizWrap)
 }
 
-function onClickEnAnswerButton(englishAnswerInput, answer) {
-    return function () {
-        console.log(englishAnswerInput.value, answer)
-        if (englishAnswerInput.value == answer) {
-            const englishItem = document.createElement('div')
-            englishItem.innerHTML = '영어'
-            englishItem.className = 'item'
-            englishItem.id = 2
-            englishItem.addEventListener("click", onClickItem(englishItem))
-            inventoryBox.appendChild(englishItem)
-        }
-        else
-            console.log('worng')
-    }
-}
-
-function onClickEnglishButton() {
+function onClickEnglishQuizButton() {
     renderEnglishQuiz()
 }
 
-function onClickQuizButton() {
+function onClickQuizTabButton() {
     changeSellState(false)
     renderQuizBox()
 }
 
-function renderDrawBox() {
+async function renderDrawBox() {
     getItemBox.replaceChildren()
+    // 노말등급 일반 뽑기 
     const nomalDrawButtonWrap = document.createElement('div')
     nomalDrawButtonWrap.className = 'ticketWrap'
     const normalDrawText = document.createElement('div')
     normalDrawText.className = 'ticketText'
     normalDrawText.textContent = '1티켓 or 3원'
     const nomalDrawButton = document.createElement('button')
-    nomalDrawButton.innerHTML = '일반뽑기'
+    nomalDrawButton.textContent = '일반뽑기'
     nomalDrawButton.className = 'drawButton'
-    nomalDrawButton.addEventListener('click', function () {
-        console.log('normalButton click')
-        const url = 'http://localhost:3000/user/randomDraw/' + 'normal'
-        fetch(url)
-            .then((response) => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text)
-                    })
-                }
-                return response.json()
-            })
-            .then(
-                (data) => {
-                    const item = makeItem(data[0][0], data[1])
-                    inventoryBox.appendChild(item)
-                    updateInventoryINFO()
-                    checkColletion(data[0][0])
-                },
-                (error) => {
-                    alert(error)
-                }
-            )
+    nomalDrawButton.addEventListener('click', async function () {
+        const drawItemData = await fetchGetDrawItemData('normal')
+        const darwItem = makeItemDiv(drawItemData[0][0], drawItemData[1])
+        inventoryBox.appendChild(darwItem)
+        updateInventoryINFO()
+        collectionCheck(drawItemData[0][0])
     })
-
+    // 레어~에픽등급 스페셜 뽑기
     const specialDrawButtonWrap = document.createElement('div')
+    specialDrawButtonWrap.className = 'ticketWrap'
     const specialDrawText = document.createElement('div')
     specialDrawText.className = 'ticketText'
     specialDrawText.textContent = '1티켓 or 15원'
-    specialDrawButtonWrap.className = 'ticketWrap'
     const specialDrawButton = document.createElement('button')
-    specialDrawButton.innerHTML = '고급뽑기'
+    specialDrawButton.textContent = '고급뽑기'
     specialDrawButton.className = 'drawButton'
-    specialDrawButton.addEventListener('click', function () {
-        const url = 'http://localhost:3000/user/randomDraw/' + 'special'
-        fetch(url)
-            .then((response) => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text)
-                    })
-
-                }
-                return response.json()
-            })
-            .then(
-                (data) => {
-                    const item = makeItem(data[0][0], data[1])
-                    inventoryBox.appendChild(item)
-                    updateInventoryINFO()
-                },
-                (error) => {
-                    alert(error)
-                }
-            )
+    specialDrawButton.addEventListener('click', async function () {
+        const drawItemData = await fetchGetDrawItemData('special')
+        const darwItem = makeItemDiv(drawItemData[0][0], drawItemData[1])
+        inventoryBox.appendChild(darwItem)
+        updateInventoryINFO()
+        collectionCheck(drawItemData[0][0])
     })
+
     nomalDrawButtonWrap.appendChild(nomalDrawButton)
     nomalDrawButtonWrap.appendChild(normalDrawText)
     specialDrawButtonWrap.appendChild(specialDrawButton)
@@ -271,12 +217,12 @@ function renderDrawBox() {
     getItemBox.appendChild(specialDrawButtonWrap)
 }
 
-function onClickDrawButton() {
+function onClickDrawTabButton() {
     changeSellState(false)
     renderDrawBox()
 }
 
-function makeItem(itemObject, inventoryId) {
+function makeItemDiv(itemObject, inventoryId) {
     const item = document.createElement('div')
     item.className = 'item'
     item.innerHTML = itemObject.name + '<br>' + itemObject.level
@@ -284,7 +230,7 @@ function makeItem(itemObject, inventoryId) {
     item.addEventListener('click', onClickItem(item, itemObject))
     item.addEventListener('mouseenter', renderItemINFO(item, itemObject))
     item.addEventListener('mouseout', () => {
-        const itemTextDiv = document.getElementById('itemInfo')
+        const itemTextDiv = document.getElementById('itemINFO')
         item.removeChild(itemTextDiv)
     })
     return item
@@ -295,76 +241,50 @@ function renderSellItemBox() {
     sellState = true
     const sellBox = document.createElement('div')
     sellBox.id = 'sellBox'
-    sellBox.innerHTML = '판매할 아이템을 선택하세요'
+    sellBox.textContent = '판매할 아이템을 선택하세요'
     const sellButton = document.createElement('button')
-    sellButton.addEventListener('click', onClickSellButton)
-    sellButton.id = 'sellButton'
-    sellButton.innerHTML = '판매'
+    sellButton.addEventListener('click', onClickSellTabButton)
+    sellButton.textContent = '판매'
     getItemBox.appendChild(sellBox)
     getItemBox.appendChild(sellButton)
 }
 
-function onClickSellButton() {
-    let sumSellItemCost = 0
-    let sellItems = []
+async function onClickSellTabButton() {
+    let sellItemsInventoryIdArr = []
     const sellItemList = sellBox.childNodes
-
     for (let i = 0; i < sellItemList.length; i++) {
-        sellItems.push(sellItemList[i].dataset.inventoryId)
+        sellItemsInventoryIdArr.push(sellItemList[i].dataset.inventoryId)
     }
-
-    let url = 'http://localhost:3000/sellItem/'
-    fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sellItems),
-    })
-        .then((response) => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(text)
-                })
-            }
-            return response.json()
-        })
-        .then(
-            (data) => {
-                console.log(data)
-                alert("판매 금액 : " + data.result)
-                updateSellCount(-sellItemList.length)
-                renderSellItemBox()
-                updateInventoryINFO()
-                changeGetItemButtonState(false)
-
-            },
-            (error) => {
-                alert(error)
-            }
-        )
-
+    const sellPrice = await fetchSellItems(sellItemsInventoryIdArr)
+    console.log(sellPrice)
+    alert("판매 금액 : " + sellPrice.result)
+    updateSellCount(-sellItemList.length)
+    renderSellItemBox()
+    updateInventoryINFO()
+    changeTabButton(false)
 }
 
 function changeSellState(state) {
     sellState = state
 }
 
-function updateSellCount(change) {
-    sellItemCount = sellItemCount + change
+function updateSellCount(changeCount) {
+    sellItemCount = sellItemCount + changeCount
 }
 
-function changeGetItemButtonState(state) {
+function changeTabButton(state) {
     quizButton.disabled = state
     drawButton.disabled = state
     sellButton.disabled = state
+    enforceButton.disabled = state
+    editButton.disabled = state
 }
 
 
-document.getElementById('quiz').addEventListener('click', onClickQuizButton)
-document.getElementById('draw').addEventListener('click', onClickDrawButton)
-document.getElementById('sell').addEventListener('click', renderSellItemBox)
+document.getElementById('quizTabButton').addEventListener('click', onClickQuizTabButton)
+document.getElementById('drawTabButton').addEventListener('click', onClickDrawTabButton)
+document.getElementById('sellTabButton').addEventListener('click', renderSellItemBox)
 
 export {
-    renderQuizBox, onClickMathButton, onClickItem, onClickEnglishButton,
-    onClickQuizButton, renderDrawBox, onClickDrawButton, makeItem,
-    changeSellState, sellState, sellItemCount, updateSellCount, changeGetItemButtonState
+    renderQuizBox, onClickItem, onClickQuizTabButton, renderDrawBox, onClickDrawTabButton, makeItemDiv, changeSellState, sellState, sellItemCount, updateSellCount, changeTabButton
 }

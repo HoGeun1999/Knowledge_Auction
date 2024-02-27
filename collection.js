@@ -1,177 +1,53 @@
-import { collectionObject } from "./KnowledgeObject.js"
 import { updateInventoryINFO } from "./Inventory.js"
+import { fetchGetCollectionData, fetchCollectionCheck, fetchCollectionReward } from "./api.js"
+
 let collectionTabObject = {}
 const collectionBox = document.getElementById('collection')
 
-
-function renderCollectionBox(){
-    let url = 'http://localhost:3000/collectionList/'
-    fetch(url)
-    .then(function(response){
-        return response.json()
-    })
-    .then(function(data){
-        console.log(data)
-        for(let i = 0; i < data.length; i++){
-            const check = data[i].collectionName in collectionTabObject
-            if(check === false){
-                collectionTabObject[data[i].collectionName] = 1
-                const collectionTab = document.createElement('div')
-                const collectionClearButton = document.createElement('button')
-                collectionClearButton.innerHTML = '완료 보상'
-                collectionClearButton.className = 'rewardButton'
-                collectionClearButton.addEventListener('click',onclickRewardButton(data[i].collectionId,collectionClearButton))
-                if(data[i].rewardClear === 1){
-                    collectionClearButton.disabled = true
-                }
-                // collectionClearButton.addEventListener('click',eval('onclickCollectionReward' + data[i].clearRewardId + '()'))
-                collectionTab.className = 'collectionTab'
-                collectionTab.innerHTML = data[i].collectionName
-                collectionBox.appendChild(collectionTab)
-                collectionTab.appendChild(collectionClearButton)
+async function renderCollectionBox() {
+    const collectionData = await fetchGetCollectionData()
+    for (let i = 0; i < collectionData.length; i++) {
+        if (!(collectionData[i].collectionName in collectionTabObject)) {
+            collectionTabObject[collectionData[i].collectionName] = 'ok'
+            const collectionTab = document.createElement('div')
+            const collectionClearButton = document.createElement('button')
+            collectionClearButton.textContent = '완료 보상'
+            collectionClearButton.addEventListener('click', async function(){
+                const collectionReward = await fetchCollectionReward(collectionData[i].collectionId)
+                updateInventoryINFO()
+                alert(collectionReward.result)
+                collectionClearButton.disabled = true
+            })
+            if (collectionData[i].rewardClear === 1) {
+                collectionClearButton.disabled = true
             }
-            const item = document.createElement('div')
-            item.dataset.name = data[i].name
-            item.dataset.level = data[i].level
-            if(data[i].getHistory === 0){
-                item.className = 'collectionItem'
-            }
-            else{
-                item.className = 'collectionClearItem'
-            }
-            item.innerHTML = data[i].name + '<br>' + data[i].level
-
-            collectionBox.appendChild(item)
+            collectionTab.className = 'collectionTab'
+            collectionTab.textContent = collectionData[i].collectionName
+            collectionBox.appendChild(collectionTab)
+            collectionTab.appendChild(collectionClearButton)
         }
-    })
+        const collectionItemDIv = document.createElement('div')
+        collectionItemDIv.dataset.name = collectionData[i].name
+        collectionItemDIv.dataset.level = collectionData[i].level
+        if (collectionData[i].getHistory === 0) {
+            collectionItemDIv.className = 'collectionItem'
+        }
+        else {
+            collectionItemDIv.className = 'collectionClearItem'
+        }
+        collectionItemDIv.innerHTML = collectionData[i].name + '<br>' + collectionData[i].level
+        collectionBox.appendChild(collectionItemDIv)
+    }
 }
 
-function checkColletion(data){
-    let url = 'http://localhost:3000/collectionCheck/'
-    fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ name: data.name, level: data.level }),
-    })
-    // .then(function(response){
-    //     return response.json()
-    // })
-
-    const items = document.querySelectorAll(".collectionItem")
-    for(let i = 0; i< items.length ; i++){
-        if(items[i].dataset.name == data.name && items[i].dataset.level == data.level){
-            items[i].className = 'collectionClearItem'
+async function collectionCheck(itemData) {
+    await fetchCollectionCheck(itemData)
+    const collectionItems = document.querySelectorAll(".collectionItem")
+    for (let i = 0; i < collectionItems.length; i++) {
+        if (collectionItems[i].dataset.name == itemData.name && collectionItems[i].dataset.level == itemData.level) {
+            collectionItems[i].className = 'collectionClearItem'
         }
     }
 }
 
-
-function onclickRewardButton(id,collectionClearButton){
-    return() =>{
-        eval('onclickCollectionReward' + id + '(collectionClearButton)')
-    }
-}
-
-
-function onclickCollectionReward1(button){
-    let url =  'http://localhost:3000/collectionReward/1'
-    fetch(url)
-    .then((response) => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(text)
-            })
-
-        }
-        return response.json()
-    })
-    .then(
-        (data) => {
-            alert(data.result)
-            button.disabled = true 
-            updateInventoryINFO()
-
-        },
-        (error) => {
-            alert(error)
-        }
-    )
-   
-}
-
-function onclickCollectionReward2(button){
-    let url =  'http://localhost:3000/collectionReward/2'
-    fetch(url)
-    .then((response) => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(text)
-            })
-
-        }
-        return response.json()
-    })
-    .then(
-        (data) => {
-            alert(data.result)
-            button.disabled = true 
-            updateInventoryINFO()
-
-        },
-        (error) => {
-            alert(error)
-        }
-    )
-}
-
-function onclickCollectionReward3(button){
-    let url =  'http://localhost:3000/collectionReward/3'
-    fetch(url)
-    .then((response) => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(text)
-            })
-
-        }
-        return response.json()
-    })
-    .then(
-        (data) => {
-            alert(data.result)
-            button.disabled = true 
-            updateInventoryINFO()
-
-        },
-        (error) => {
-            alert(error)
-        }
-    )
-}
-
-function onclickCollectionReward4(button){
-    let url =  'http://localhost:3000/collectionReward/4'
-    fetch(url)
-    .then((response) => {
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(text)
-            })
-
-        }
-        return response.json()
-    })
-    .then(
-        (data) => {
-            alert(data.result)
-            button.disabled = true 
-            updateInventoryINFO()
-
-        },
-        (error) => {
-            alert(error)
-        }
-    )
-}
-
-export {renderCollectionBox, checkColletion}
+export { renderCollectionBox, collectionCheck }

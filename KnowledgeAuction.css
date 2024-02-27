@@ -44,8 +44,7 @@ body{
     border: 1px solid black;
     height: 350px;
     width: 600px;
-    overflow-x: hidden;;
-
+    overflow: hidden;
 }
 
 #upgradeWrap {
@@ -72,13 +71,8 @@ body{
     width: 100px;
     font-size: 15px;
     margin-left: 120px;
-    margin-top: 80px;
+    margin-top: 120px;
 }
-
-/* .quizButton{
-    display: flex; 
-    justify-content: center;
-} */
 
 #enforceBox{
     height: 130px;
@@ -118,14 +112,9 @@ body{
     margin: 5px 5px 5px 5px;
     display: inline-table;
     position: relative;
-    /* float: left; */
-}
-
-.itemInventory{
-    border: 1px solid black;
-    height: 100px;
-    width: 100px;
-    float: left;
+    text-align: center;
+    justify-content: center;
+    /* line-height: 30px; */
 }
 
 .drawButton{
@@ -133,7 +122,7 @@ body{
     height: 30px;
 }
 
-#itemInfo{
+#itemINFO{
     border: 1px solid black;
     height: 150px;
     width: 300px; 
@@ -148,7 +137,7 @@ body{
     padding: 10px;
     z-index: 10;
 }
-
+/* 요까지 있는거 확인함 */
 
 .collectionTab{
     border: 1px solid black;
@@ -172,7 +161,9 @@ body{
     margin: 5px 5px 5px 5px;
     display: inline-table;
     position: relative;
-    opacity : 0.5;
+    text-align: center;
+    line-height: 45px;
+    opacity : 0.3;
 }
 
 
@@ -183,6 +174,8 @@ body{
     margin: 5px 5px 5px 5px;
     display: inline-table;
     position: relative;
+    text-align: center;
+    line-height: 45px;
 }
 
 
@@ -201,13 +194,6 @@ body{
     position: relative;
 }
 
-
-.quizWrap{
-    margin-left: 120px;
-    display: flex;
-    margin-top: 120px;
-    font-size: 20px;
-}
 
 #enforceWrap{
     height: 200px;
@@ -230,4 +216,31 @@ body{
 
 #editWrap{
     display: flex;
+}
+
+#mathAnswerInput{
+    width: 70px;
+    margin-left: 10px;
+}
+
+#englishQuizWrap{
+    height: 350px;
+    width: 600px;
+    overflow: hidden;   
+    position: relative;;
+}
+
+#allDivWrap{
+    position: absolute;
+    top: 30%;
+    left: 20%;
+    align-items: center;   
+    text-align: center;
+}
+
+#mathQuizWrap{
+    margin-left: 180px;
+    display: flex;
+    margin-top: 140px;
+    font-size: 20px;
 }
