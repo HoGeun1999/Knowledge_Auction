@@ -221,7 +221,6 @@ function onClickDrawTabButton() {
 }
 
 function makeItemDiv(itemObject, inventoryId) {
-    console.log(inventoryId)
     const item = document.createElement('div')
     item.className = 'item'
     item.innerHTML = itemObject.name + '<br>' + itemObject.level

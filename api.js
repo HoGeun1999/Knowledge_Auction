@@ -1,6 +1,30 @@
-async function fetchUserData() { 
-    const url = 'http://localhost:3000/userData/' 
-    const userData = await fetch(url)  
+import { makeItemDiv, changeTabButton } from "./getItem.js"
+import { renderEnforceBox } from "./Upgrade.js"
+import { setIsFull, updateInventoryINFO } from "./Inventory.js"
+import { collectionCheck } from "./collection.js"
+
+const inventory = document.getElementById('inventory')
+
+async function fetchUserData() {
+    const url = 'http://localhost:3000/userData/'
+    const userData = await fetch(url)
+        .then((res) => {
+            if (!res.ok) {
+                return res.text().then(text => {
+                    throw new Error(text)
+                })
+            }
+            return res.json()
+        }).then(
+            (data) => {
+                return data
+            },
+            (error) => {
+                alert(error)
+            }
+        )
+
+    return userData
 }
 
 function fetchUserInventoryItems() {
@@ -28,7 +52,7 @@ function fetchUserInventoryItems() {
 async function fetchMathItemData() {
     const url = 'http://localhost:3000/mathItemData'
     const mathItmeData = await fetch(url, {
-        method: "POST" 
+        method: "POST"
     }).then((res) => {
         if (!res.ok) {
             return res.text().then(text => { //문법이해가 안됨
@@ -149,7 +173,6 @@ function fetchCollectionCheck(itemData) {
 
 function fetchCollectionReward(collectionId) {
     const url = 'http://localhost:3000/collectionReward/'
-    console.log(collectionId, url)
     const collectionReward = fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -173,8 +196,8 @@ function fetchCollectionReward(collectionId) {
     return collectionReward
 }
 
-function fetchEnforceItem(inventoryId) {
-    let url = 'http://localhost:3000/items/enforce/'
+async function fetchEnforceItem(inventoryId) {
+    const url = 'http://localhost:3000/items/enforce/'
     const enforceData = fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -194,7 +217,6 @@ function fetchEnforceItem(inventoryId) {
             alert(error)
         }
     )
-
     return enforceData
 }
 

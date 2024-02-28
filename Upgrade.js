@@ -89,7 +89,7 @@ async function onClickEditButton() {
         const leftItem = editLeftBox.children[0]
         const rightItem = editRightBox.children[0]
         const editItemData = await fetchEditItem(leftItem.dataset.inventoryId, rightItem.dataset.inventoryId) // 위의 enforce방식과 이 방식이 조금 다른데 어느게 더 맞는건지
-        const editItem = makeItemDiv(editItemData[0],editItemData[0].inventory_id)
+        const editItem = makeItemDiv(editItemData[0], editItemData[0].inventory_id)
         inventory.appendChild(editItem)
         renderEditBox()
         changeTabButton(false)

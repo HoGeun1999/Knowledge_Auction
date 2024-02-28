@@ -49,7 +49,7 @@ app.post('/items/enforce/', function (req, res) {
       if (userMoney[0].holdings > 0) {
         await executeQuery(`UPDATE userData SET holdings = ${userMoney[0].holdings - enforceProbability[0].price} where id = ${userID}`)
         const randomNum = Math.floor(Math.random() * 10 + 1);
-        if (randomNum >= 5) {
+        if (randomNum >= 10) {
           await executeQuery(`DELETE FROM inventory where id = '${inventoryID}'`)
           connection.commit((err) => {
             if (err) {
@@ -59,7 +59,7 @@ app.post('/items/enforce/', function (req, res) {
               })
             }
             else {
-              // res.status(400)   이렇게 스테이터스 변경하고 에러처리해야하는지 아님 그냥 send() 안의 값을 보고 if문으로 제어해야하는지
+              // res.status(400)   이렇게 스테이터스 변경하고 에러처리해야하는지 아님 그냥 send() 안의 값을 보고 if문으로 제어해야하는지 / 후자가 더 맞는거 같긴함
               res.send({ result: '파괴' })
             }
           })
@@ -95,12 +95,10 @@ app.post('/items/enforce/', function (req, res) {
 
       }
     })
-
   }
   catch (e) {
     console.log("err:", e);
   }
-
 })
 
 app.post('/sellItems/', function (req, res) {
@@ -113,7 +111,7 @@ app.post('/sellItems/', function (req, res) {
         const ids = await executeQuery(`SELECT itemId FROM inventory where id = '${sellItemList[i]}'`);
         const price = await executeQuery(`SELECT price FROM knowledge where id = '${ids[0].itemId}'`)
         await executeQuery(`DELETE FROM inventory WHERE id = '${sellItemList[i]}'`);
-        await executeQuery(`UPDATE userData SET holdings = holdings + ${price[0].price}`);
+        await executeQuery(`UPDATE userData SET holdings = holdings + ${price[ 0].price}`);
         sellMoney = sellMoney + price[0].price
       }
       connection.commit((err) => {
