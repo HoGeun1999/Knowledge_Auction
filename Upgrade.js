@@ -1,12 +1,15 @@
 import { changeTabButton, makeItemDiv } from "./getItem.js"
-import { setIsfull, updateInventoryINFO, leftFull, rightFull, setLeftRightfull } from "./Inventory.js"
+import { setIsFull, updateInventoryINFO, leftFull, rightFull, setLeftRightFull } from "./Inventory.js"
 import { collectionCheck } from "./collection.js"
+import { fetchEnforceItem, fetchEditItem } from "./api.js"
 
 const inventory = document.getElementById('inventory')
 const upgradeBox = document.getElementById('upgrade')
+let upgradeState = 'enfroce'
 
 function renderEnforceBox() {
     upgradeBox.replaceChildren()
+    upgradeState = 'enforce'
     const enforceWrap = document.createElement('div')
     enforceWrap.id = 'enforceWrap'
     const enforceBox = document.createElement('div')
@@ -16,7 +19,7 @@ function renderEnforceBox() {
     enforceButton.id = 'enforceButton'
     enforceButton.textContent = '강화하기'
     enforceButton.addEventListener('click', onClickEnforceButton)
-    
+
     enforceWrap.appendChild(enforceBox)
     enforceWrap.appendChild(enforceButton)
     upgradeBox.appendChild(enforceWrap)
@@ -26,107 +29,51 @@ function onClickEnforceTabButton() {
     renderEnforceBox()
 }
 
-function onClickEnforceButton() {
+async function onClickEnforceButton() {
     const enforceBox = document.getElementById('enforceBox')
     const enforceItem = enforceBox.childNodes[0]
-    console.log(enforceItem)
-    let url = 'http://localhost:3000/items/enforce/' + enforceItem.dataset.inventoryId
-    fetch(url)
-        .then((response) => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(text)
-                })
-            }
-            return response.json()
-        })
-        .then(
-            (data) => {
-                updateInventoryINFO()
-                if (data.result === '강화 실패') {
-                    alert('강화 실패')
-                    return
-                }
-                else if (data.result === '파괴') {
-                    alert('아이템 파괴')
-                    renderEnforceBox()
-                    changeTabButton(false)
-                    setIsfull(0)
-                    return
-                }
-                else {
-                    const newItem = makeItemDiv(data.result[0][0], data.result[1])
-                    inventory.appendChild(newItem)
-                    renderEnforceBox()
-                    changeTabButton(false)
-                    setIsfull(0)
-                    collectionCheck(data.result[0][0])
-                }
-            },
-            (error) => {
-                alert(error)
-            }
-        )
-
+    const enforceData = await fetchEnforceItem(enforceItem.dataset.inventoryId)
+    updateInventoryINFO()
+    if (enforceData.result === '강화 실패') {
+        alert('강화 실패')
+        return
+    }
+    else if (enforceData.result === '파괴') {
+        alert('아이템 파괴')
+        renderEnforceBox()
+        changeTabButton(false)
+        setIsFull(false)
+        return
+    }
+    else {
+        const newItem = makeItemDiv(enforceData.result[0][0], enforceData.result[1])
+        inventory.appendChild(newItem)
+        renderEnforceBox()
+        changeTabButton(false)
+        setIsFull(false)
+        collectionCheck(enforceData.result[0][0])
+    }
 }
-
-
-
 
 function renderEditBox() {
     upgradeBox.replaceChildren()
-    upgradeBox.className = 'editState'
+    upgradeState = 'edit'
     const editWrap = document.createElement('div')
-
     editWrap.id = 'editWrap'
     const editBoxLeft = document.createElement('div')
-    const editBoxRight = document.createElement('div')
     editBoxLeft.id = 'editBoxLeft'
+    const editBoxRight = document.createElement('div')
     editBoxRight.id = 'editBoxRight'
     editBoxLeft.className = 'editBox'
     editBoxRight.className = 'editBox'
-    editBoxLeft.innerHTML = '합성할 아이템을 선택하세요'
-    editBoxRight.innerHTML = '합성할 아이템을 선택하세요'
-    editBoxLeft.addEventListener("dragover", (e) => {
-        e.preventDefault();
-    })
-    editBoxLeft.addEventListener("drop", (e) => {
-        if (editBoxLeft.classList.contains('full')) {
-            return
-        }
-        else {
-            e.preventDefault()
-            e.target.classList.remove("dragging")
-            dragged.parentNode.removeChild(dragged)
-            e.target.appendChild(dragged)
-            console.log(dragged)
-            editBoxLeft.classList.add('full')
-        }
-
-    })
-    editBoxRight.addEventListener("dragover", (e) => {
-        e.preventDefault();
-    })
-    editBoxRight.addEventListener("drop", (e) => {
-        if (editBoxRight.classList.contains('full')) {
-            return
-        }
-        else {
-            e.preventDefault()
-            e.target.classList.remove("dragging")
-            dragged.parentNode.removeChild(dragged)
-            e.target.appendChild(dragged)
-            console.log(dragged)
-            editBoxRight.classList.add('full')
-        }
-
-    })
+    editBoxLeft.textContent = '합성할 아이템을 선택하세요'
+    editBoxRight.textContent = '합성할 아이템을 선택하세요'
     const plusDiv = document.createElement('div')
     plusDiv.id = 'plusDiv'
-    plusDiv.innerHTML = '+'
+    plusDiv.textContent = '+'
     const editButton = document.createElement('button')
-    editButton.innerHTML = '합성하기'
     editButton.id = 'editButton'
+    editButton.textContent = '합성하기'
     editButton.addEventListener('click', onClickEditButton)
     editWrap.appendChild(editBoxLeft)
     editWrap.appendChild(plusDiv)
@@ -135,52 +82,24 @@ function renderEditBox() {
     upgradeBox.appendChild(editWrap)
 }
 
-function onClickEditButton() {
-    if (leftFull == 1 && rightFull == 1) {
+async function onClickEditButton() {
+    if (leftFull === true && rightFull === true) {
         const editLeftBox = document.getElementById('editBoxLeft')
         const editRightBox = document.getElementById('editBoxRight')
         const leftItem = editLeftBox.children[0]
         const rightItem = editRightBox.children[0]
-        let url = 'http://localhost:3000/edit/'
-        fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(
-                {
-                    leftItemId: leftItem.dataset.inventoryId,
-                    rightItemId: rightItem.dataset.inventoryId
-                }),
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(text)
-                    })
-                }
-                return response.json()
-            })
-            .then(
-                (data) => {
-                    const newItem = makeItemDiv(data[0],data[0].inventory_id)
-                    inventory.appendChild(newItem)
-                    renderEditBox()
-                    changeTabButton(false)
-                    collectionCheck(data[0])
-                    setLeftRightfull(0)
-                },
-                (error) => {
-                    alert(error)
-                }
-            )
+        const editItemData = await fetchEditItem(leftItem.dataset.inventoryId, rightItem.dataset.inventoryId) // 위의 enforce방식과 이 방식이 조금 다른데 어느게 더 맞는건지
+        const editItem = makeItemDiv(editItemData[0],editItemData[0].inventory_id)
+        inventory.appendChild(editItem)
+        renderEditBox()
+        changeTabButton(false)
+        collectionCheck(editItemData[0])
+        setLeftRightFull(false)
     }
-
-
-
-    else { 
+    else {
         alert('아이템부족')
     }
 }
-
 
 function onClickEditTabButton() {
 
@@ -192,4 +111,4 @@ document.getElementById('editTabButton').addEventListener('click', onClickEditTa
 document.getElementById('enforceTabButton').addEventListener('click', onClickEnforceTabButton)
 
 
-export { renderEnforceBox, onClickEnforceTabButton, renderEditBox, onClickEditTabButton }
+export { renderEnforceBox, onClickEnforceTabButton, renderEditBox, onClickEditTabButton, upgradeState }

@@ -1,7 +1,7 @@
 import englishWord from "./englishQuizObject.js"
 import { renderItemINFO, onClickItem, updateInventoryINFO } from "./Inventory.js"
 import { collectionCheck } from "./collection.js"
-import { fetchGetMathItemData, fetchGetEnglishItemData, fetchGetDrawItemData, fetchSellItems } from "./api.js"
+import { fetchMathItemData, fetchEnglishItemData, fetchDrawItemData, fetchSellItems } from "./api.js"
 
 const inventoryBox = document.getElementById('inventory')
 const getItemBox = document.getElementById('getItem')
@@ -48,7 +48,7 @@ async function renderMathQuiz() {
     answerCheckButton.textContent = '입력'
     answerCheckButton.addEventListener('click', async function onClickmathAnswerButton() {
         if (mathAnswerInput.value == mathAnswer) { // mathAnswerInput.value가 int형이 아닌듯해서 근대 int형으로 바꾸고 ===쓸려해도 사용자가 str을 입력하면 int로 바꾸는데 문제고 또 if문써야하니까 그냥 ==이 좋지 않나?
-            const mathItemData = await fetchGetMathItemData()
+            const mathItemData = await fetchMathItemData()
             const mathItem = makeItemDiv(mathItemData[0], mathItemData[0].inventory_id)
             inventoryBox.appendChild(mathItem)
             renderMathQuiz()
@@ -76,15 +76,14 @@ function shuffleArray(array) {
 
 function renderEnglishQuiz() {
     getItemBox.replaceChildren()
-    // 문제 만들기
     const englishQuizWrap = document.createElement('div')
     englishQuizWrap.id = 'englishQuizWrap'
     const allDivWrap = document.createElement('div')
     allDivWrap.id = 'allDivWrap'
     const englishQuiz = document.createElement('div')
-    const randomProblemAnswerIndex = Math.floor(Math.random() * englishWord.length)  // 이름 짓기가 어려운데 형같으면 이런건 뭐라 했을지?
+    const randomProblemAnswerIndex = Math.floor(Math.random() * englishWord.length) 
     const randomProblemAnswer = englishWord[randomProblemAnswerIndex]
-    const randomOptionIndexArray = [randomProblemAnswerIndex] // 마지막에 arr or array까지 붙여주는게 좋나?
+    const randomOptionIndexArray = [randomProblemAnswerIndex]
     englishQuiz.innerHTML = '다음 영단어를 보고 올바른 뜻을 고르시오' + '<br>' + randomProblemAnswer[0] + '<br>'
     while (true) {
         const randomOptionIndex = Math.floor(Math.random() * englishWord.length)
@@ -95,9 +94,8 @@ function renderEnglishQuiz() {
             break
         }
     }
-    //선택한 문제 답, 선택지 순서 섞기
     shuffleArray(randomOptionIndexArray)
-    // 선택지들 radio 형태로 만들어서 넣기
+
     const allOptionWarp = document.createElement('div')
     allOptionWarp.id = 'allOptionWarp'
     const englishQuizOptionWrap1 = document.createElement('div')
@@ -132,7 +130,7 @@ function renderEnglishQuiz() {
     englishQuizOptionlabel3.textContent = `${englishWord[randomOptionIndexArray[2]][1]}`
     englishQuizOptionWrap3.appendChild(englishQuizOption3)
     englishQuizOptionWrap3.appendChild(englishQuizOptionlabel3)
-    //정답버튼 눌렀을때 동작
+
     const answerCheckButton = document.createElement('button')
     answerCheckButton.textContent = '정답확인'
     answerCheckButton.addEventListener('click', async function () {
@@ -141,7 +139,7 @@ function renderEnglishQuiz() {
             let isSelected = optionButton[i].matches(":checked")
             if (isSelected) {
                 if (optionButton[i].value == englishWord[randomProblemAnswerIndex][1]) {
-                    const englishItemData = await fetchGetEnglishItemData()
+                    const englishItemData = await fetchEnglishItemData()
                     const englishItem = makeItemDiv(englishItemData[0], englishItemData[0].inventory_id)
                     inventoryBox.appendChild(englishItem)
                     renderEnglishQuiz()
@@ -186,7 +184,7 @@ async function renderDrawBox() {
     nomalDrawButton.textContent = '일반뽑기'
     nomalDrawButton.className = 'drawButton'
     nomalDrawButton.addEventListener('click', async function () {
-        const drawItemData = await fetchGetDrawItemData('normal')
+        const drawItemData = await fetchDrawItemData('normal')
         const darwItem = makeItemDiv(drawItemData[0][0], drawItemData[1])
         inventoryBox.appendChild(darwItem)
         updateInventoryINFO()
@@ -202,7 +200,7 @@ async function renderDrawBox() {
     specialDrawButton.textContent = '고급뽑기'
     specialDrawButton.className = 'drawButton'
     specialDrawButton.addEventListener('click', async function () {
-        const drawItemData = await fetchGetDrawItemData('special')
+        const drawItemData = await fetchDrawItemData('special')
         const darwItem = makeItemDiv(drawItemData[0][0], drawItemData[1])
         inventoryBox.appendChild(darwItem)
         updateInventoryINFO()
@@ -223,6 +221,7 @@ function onClickDrawTabButton() {
 }
 
 function makeItemDiv(itemObject, inventoryId) {
+    console.log(inventoryId)
     const item = document.createElement('div')
     item.className = 'item'
     item.innerHTML = itemObject.name + '<br>' + itemObject.level

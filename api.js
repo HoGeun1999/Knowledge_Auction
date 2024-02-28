@@ -1,7 +1,6 @@
-async function fetchGetUserData() { // 이름이 맞나?
-    const url = 'http://localhost:3000/userData/' //명사 써야되는게 맞는데 userData or userInventoryResource 뭐가더 좋아보이는지
-    const userData = await fetch(url)  // 아래 함수처럼 어차피 에러처리해주면서 then2번쓰면 굳이 여기서 awit할 필요가 없는듯?
-    return userData.json()
+async function fetchUserData() { 
+    const url = 'http://localhost:3000/userData/' 
+    const userData = await fetch(url)  
 }
 
 function fetchUserInventoryItems() {
@@ -26,12 +25,12 @@ function fetchUserInventoryItems() {
     return inventoryItem
 }
 
-async function fetchGetMathItemData() {
+async function fetchMathItemData() {
     const url = 'http://localhost:3000/mathItemData'
     const mathItmeData = await fetch(url, {
-        method: "POST"  // POST와 PUT 차이점? << PUT이 더 맞나 이런 상황은? 아니면 그정도는 상관없나
+        method: "POST" 
     }).then((res) => {
-        if (!res.ok) {  // 이 fetch 에러를 딱히 컨트롤할게 없음.. 애매
+        if (!res.ok) {
             return res.text().then(text => { //문법이해가 안됨
                 throw new Error(text)
             })
@@ -48,7 +47,7 @@ async function fetchGetMathItemData() {
     return mathItmeData
 }
 
-async function fetchGetEnglishItemData() {
+async function fetchEnglishItemData() {
     const url = 'http://localhost:3000/englishItemData'
     const englishItem = await fetch(url, {
         method: "POST"
@@ -71,7 +70,7 @@ async function fetchGetEnglishItemData() {
     return englishItem
 }
 
-async function fetchGetDrawItemData(rarity) {
+async function fetchDrawItemData(rarity) {
     const url = `http://localhost:3000/randomDraw/${rarity}`
     const drawItemData = await fetch(url, {
         method: "POST"
@@ -94,7 +93,7 @@ async function fetchGetDrawItemData(rarity) {
     return drawItemData
 }
 
-function fetchSellItems(sellItemsInventoryIdArr) {  /// 이 함수를 받아 쓰는 프론트에서 async await를 쓰면 여기서 안써도 되는대 반대로는 안됨..그럼 여기는 할필요 없는거 아닌가?
+function fetchSellItems(sellItemsInventoryIdArr) {
     const url = 'http://localhost:3000/sellItems/'
     const sellPrice = fetch(url, {
         method: "POST",
@@ -118,7 +117,7 @@ function fetchSellItems(sellItemsInventoryIdArr) {  /// 이 함수를 받아 쓰
     return sellPrice
 }
 
-function fetchGetCollectionData() {
+function fetchCollectionData() {
     const url = 'http://localhost:3000/collectionData/'
     const collectionData = fetch(url)
         .then((response) => {
@@ -148,13 +147,13 @@ function fetchCollectionCheck(itemData) {
     })
 }
 
-function fetchCollectionReward(collectionId){
+function fetchCollectionReward(collectionId) {
     const url = 'http://localhost:3000/collectionReward/'
-    console.log(collectionId,url)
+    console.log(collectionId, url)
     const collectionReward = fetch(url, {
-        method: "POST" ,
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id : collectionId })
+        body: JSON.stringify({ id: collectionId })
     }).then((response) => {
         if (!response.ok) {
             return response.text().then(text => {
@@ -174,9 +173,58 @@ function fetchCollectionReward(collectionId){
     return collectionReward
 }
 
-// app.js에서 처리할때 select, insert, update, delete 등등 여러 동작을 같이 수행하면 결국 request method를 뭘로 해야함?
-// ex) 판매작업 
+function fetchEnforceItem(inventoryId) {
+    let url = 'http://localhost:3000/items/enforce/'
+    const enforceData = fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: inventoryId })
+    }).then((response) => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text)
+            })
+        }
+        return response.json()
+    }).then(
+        (data) => {
+            return data
+        },
+        (error) => {
+            alert(error)
+        }
+    )
 
+    return enforceData
+}
 
+function fetchEditItem(leftItemData, rightItemData) {
+    const url = 'http://localhost:3000/items/edit'
+    const editItemData = fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+            {
+                leftItemId: leftItemData,
+                rightItemId: rightItemData
+            })
+    }).then((response) => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text)
+            })
+        }
+        return response.json()
+    }).then(
+        (data) => {
+            return data
+        },
+        (error) => {
+            alert(error)
+        }
+    )
 
-export { fetchUserInventoryItems, fetchGetUserData, fetchGetMathItemData, fetchGetEnglishItemData, fetchGetDrawItemData, fetchSellItems, fetchGetCollectionData, fetchCollectionCheck, fetchCollectionReward }
+    return editItemData
+}
+
+export { fetchUserInventoryItems, fetchUserData, fetchMathItemData, fetchEnglishItemData, fetchDrawItemData, fetchSellItems, fetchCollectionData, fetchCollectionCheck, fetchCollectionReward, fetchEnforceItem, fetchEditItem }

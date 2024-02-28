@@ -1,11 +1,11 @@
 import { updateInventoryINFO } from "./Inventory.js"
-import { fetchGetCollectionData, fetchCollectionCheck, fetchCollectionReward } from "./api.js"
+import { fetchCollectionData, fetchCollectionCheck, fetchCollectionReward } from "./api.js"
 
 let collectionTabObject = {}
 const collectionBox = document.getElementById('collection')
 
 async function renderCollectionBox() {
-    const collectionData = await fetchGetCollectionData()
+    const collectionData = await fetchCollectionData()
     for (let i = 0; i < collectionData.length; i++) {
         if (!(collectionData[i].collectionName in collectionTabObject)) {
             collectionTabObject[collectionData[i].collectionName] = 'ok'

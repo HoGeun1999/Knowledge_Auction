@@ -1,32 +1,32 @@
 import { upgradeState, renderEnforceBox } from "./Upgrade.js"
 import { sellState, sellItemCount, updateSellCount, makeItemDiv, changeTabButton } from "./getItem.js"
-import { fetchUserInventoryItems, fetchGetUserData } from "./api.js"
+import { fetchUserInventoryItems, fetchUserData } from "./api.js"
 
 const inventory = document.getElementById('inventory')
 const enforceButton = document.getElementById('enforceTabButton')
 const editButton = document.getElementById('editTabButton')
-let isFull = 0
-let leftFull = 0
-let rightFull = 0
+let isFull = false
+let leftFull = false
+let rightFull = false
 
-function setIsfull(state) {
+function setIsFull(state) {
     isFull = state
     enforceButton.disabled = false
     editButton.disabled = false
 }
 
-function setLeftRightfull(state) {
+function setLeftRightFull(state) {
     leftFull = state
     rightFull = state
     enforceButton.disabled = false
     editButton.disabled = false
 }
 
-function renderItemINFO(item, data) {
+function renderItemINFO(item, itemData) {
     return function () {
         const itemINFOText = document.createElement('div')
         itemINFOText.id = 'itemINFO'
-        itemINFOText.innerHTML = '아이템 정보창' + '<br>' + '지식:' + data.name + '<br>' + '희귀도:' + data.rarity + '<br>' + '가격:' + data.price
+        itemINFOText.innerHTML = '아이템 정보창' + '<br>' + '지식:' + itemData.name + '<br>' + '희귀도:' + itemData.rarity + '<br>' + '가격:' + itemData.price
         let rect = item.getBoundingClientRect()
         itemINFOText.style.left = rect.x + 80
         itemINFOText.style.top = rect.y + 10
@@ -35,7 +35,7 @@ function renderItemINFO(item, data) {
 }
 
 function moveItemToUpgrade(item, moveLocation) {
-    moveLocation.innerHTML = ''
+    moveLocation.textContent = ''
     moveLocation.appendChild(item)
 }
 
@@ -47,7 +47,7 @@ function onClickItem(item, data) {
         if (sellState === true && sellItemCount === 0) {
             inventory.removeChild(item)
             newItem.addEventListener('click', onClickSellItem(data, newItem))
-            sellBox.innerHTML = ''
+            sellBox.textContent = ''
             sellBox.appendChild(newItem)
             changeTabButton(true)
             updateSellCount(1)
@@ -66,38 +66,38 @@ function onClickItem(item, data) {
             return
         }
 
-        if (upgradeState === 'enforce' && isFull === 0) { //isFull은 true false로 쓰는게 적절한데 0,1도 사실 그런 의미로 많이 쓰니까 상관없나?
+        if (upgradeState === 'enforce' && isFull === false) { 
             inventory.removeChild(item)
-            newItem.addEventListener('click', onClickEnforceItem(data))
+            newItem.addEventListener('click', onClickEnforceItem(data, newItem))
             moveItemToUpgrade(newItem, enforceBox)
             changeTabButton(true)
-            isFull = 1
+            isFull = true
         }
         else if (upgradeState === 'edit') {
             const editBoxLeft = document.getElementById('editBoxLeft')
             const editBoxRight = document.getElementById('editBoxRight')
-            if (leftFull === 0) {
+            if (leftFull === false) {
                 inventory.removeChild(item)
                 newItem.addEventListener('click', onClickEditItem(data, newItem))
                 moveItemToUpgrade(newItem, editBoxLeft)
-                leftFull = 1
+                leftFull = true
             }
-            else if (rightFull === 0) {
+            else if (rightFull === false) {
                 inventory.removeChild(item)
                 newItem.addEventListener('click', onClickEditItem(data, newItem))
                 moveItemToUpgrade(newItem, editBoxRight)
-                rightFull = 1
+                rightFull = true
             }
             changeTabButton(true)
         }
     }
 }
 
-function onClickEnforceItem(data) {
+function onClickEnforceItem(data, item) {
     return () => {
-        const newItem = makeItemDiv(data, data.inventory_id)
+        const newItem = makeItemDiv(data, item.dataset.inventoryId)
         inventory.appendChild(newItem)
-        isFull = 0
+        isFull = false
         renderEnforceBox()
         changeTabButton(false)
     }
@@ -105,18 +105,19 @@ function onClickEnforceItem(data) {
 
 function onClickEditItem(data, item) {
     return () => {
+        console.log(data,item)
         const editBox = item.parentNode
-        const newItem = makeItemDiv(data, data.inventory_id)
+        const newItem = makeItemDiv(data, item.dataset.inventoryId)
         editBox.removeChild(item)
-        editBox.innerHTML = '합성할 아이템을 선택하세요'
+        editBox.textContent = '합성할 아이템을 선택하세요'
         inventory.appendChild(newItem)
         if (editBox.id === 'editBoxLeft') {
-            leftFull = 0
+            leftFull = false
         }
         if (editBox.id === 'editBoxRight') {
-            rightFull = 0
+            rightFull = false
         }
-        if (leftFull === 0 && rightFull === 0) {
+        if (leftFull === false && rightFull === false) {
             changeTabButton(false)
         }
     }
@@ -124,12 +125,12 @@ function onClickEditItem(data, item) {
 
 function onClickSellItem(data, item) {
     return () => {
-        const newItem = makeItemDiv(data, data.inventory_id)
+        const newItem = makeItemDiv(data, item.dataset.inventoryId)
         sellBox.removeChild(item)
         inventory.appendChild(newItem)
         updateSellCount(-1)
         if (sellItemCount == 0) {
-            sellBox.innerHTML = '판매할 아이템을 선택하세요'
+            sellBox.textContent = '판매할 아이템을 선택하세요'
             changeTabButton(false)
         }
     }
@@ -151,9 +152,9 @@ async function renderInventoryBox() {
 }
 
 async function updateInventoryINFO() {
-    const userData = await fetchGetUserData() // 단수? 복수?
+    const userData = await fetchUserData() 
     const userInventoryINFO = document.getElementById('userInventoryINFO')
     userInventoryINFO.textContent = `보유 금액: ${userData[0].holdings}, 일반티켓 : ${userData[0].normalTicket}개, 특별티켓 : ${userData[0].specialTicket}개`
 }
 
-export { renderItemINFO, onClickItem, renderInventoryBox, setIsfull, updateInventoryINFO, isFull, leftFull, rightFull, setLeftRightfull }
+export { renderItemINFO, onClickItem, renderInventoryBox, setIsFull, updateInventoryINFO, isFull, leftFull, rightFull, setLeftRightFull }
