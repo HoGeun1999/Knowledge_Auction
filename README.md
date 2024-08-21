@@ -29,7 +29,7 @@
 습득한 지식 컬렉션을 보여주는 공간이다.
 컬렉션을 모두 습득하고 완료보상 버튼을 클릭하면 각각의 컬렉션에 맞는
 보상을 획득할 수 있다. ex) 티켓3장 / 노말지식 강화확률 10% 증가
- <p align="center"><img src = './readme_image/quiz.JPG'></p>
+ <p align="center"><img src = './readme_image/collection.JPG'></p>
 
 
  ## Back-end
